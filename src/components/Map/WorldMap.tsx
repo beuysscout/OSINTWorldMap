@@ -17,12 +17,12 @@ interface WorldMapProps {
 }
 
 const REGION_COLORS: Record<string, string> = {
-  Americas: '#4fc3f7',
-  Europe: '#81c784',
-  Asia: '#ffb74d',
-  Africa: '#f06292',
-  Oceania: '#ba68c8',
-  'Middle East': '#4dd0e1',
+  Americas: '#5ab4e8',
+  Europe: '#6cb86c',
+  Asia: '#e8a854',
+  Africa: '#e87070',
+  Oceania: '#c084d4',
+  'Middle East': '#56c7d0',
 };
 
 function getRegionColor(numericCode: string): string {
@@ -118,17 +118,17 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
       const isSelected = id === selectedCountry;
 
       if (isSelected) {
-        return { fillColor: '#fff', fillOpacity: 0.35, color: '#fff', weight: 2.5 };
+        return { fillColor: '#5ab4e8', fillOpacity: 0.42, color: '#90d4f8', weight: 2 };
       }
       if (isSupported) {
         return {
           fillColor: getRegionColor(id),
-          fillOpacity: 0.55,
-          color: '#263238',
+          fillOpacity: 0.26,
+          color: 'rgba(255, 255, 255, 0.18)',
           weight: 0.8,
         };
       }
-      return { fillColor: '#37474f', fillOpacity: 0.3, color: '#263238', weight: 0.5 };
+      return { fillColor: '#3a5070', fillOpacity: 0.14, color: 'rgba(255, 255, 255, 0.08)', weight: 0.5 };
     },
     [selectedCountry],
   );
@@ -149,13 +149,13 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
         mouseover: (e) => {
           if (!isSupported) return;
           const target = e.target;
-          if (id !== selectedCountry) target.setStyle({ fillOpacity: 0.8, weight: 1.5 });
+          if (id !== selectedCountry) target.setStyle({ fillOpacity: 0.5, weight: 1.5 });
           target.bringToFront();
         },
         mouseout: (e) => {
           if (!isSupported) return;
           const target = e.target;
-          if (id !== selectedCountry) target.setStyle({ fillOpacity: 0.55, weight: 0.8 });
+          if (id !== selectedCountry) target.setStyle({ fillOpacity: 0.26, weight: 0.8 });
         },
         click: () => {
           if (isSupported) onCountrySelect(id === selectedCountry ? null : id);
