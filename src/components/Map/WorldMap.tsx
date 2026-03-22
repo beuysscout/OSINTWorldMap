@@ -1,11 +1,15 @@
 import { MapContainer, TileLayer, GeoJSON, ZoomControl } from 'react-leaflet';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { feature } from 'topojson-client';
 import type { Topology } from 'topojson-specification';
-import type { FeatureCollection, Geometry } from 'geojson';
+import type { FeatureCollection, Geometry, Position } from 'geojson';
 import type { Layer, PathOptions } from 'leaflet';
 import topology from 'world-atlas/countries-110m.json';
 import { supportedCountryCodes, getCountryByNumericCode } from '../../data/countries';
+import TradeLanesLayer from './TradeLanesLayer';
+import GeoLabels from './GeoLabels';
+import LayerControl from '../UI/LayerControl';
+import type { TradeLaneCategory } from '../../data/tradeLanes';
 
 interface WorldMapProps {
   selectedCountry: string | null;
@@ -27,10 +31,58 @@ function getRegionColor(numericCode: string): string {
   return REGION_COLORS[country.region] || '#78909c';
 }
 
+// ── Antimeridian fix ──────────────────────────────────────────────────────
+// world-atlas encodes Russia's Chukchi Peninsula with longitude > 180,
+// causing Leaflet to render a horizontal fill band across the entire map.
+// Clamping to [-180, 180] keeps polygons self-consistent and removes the artifact.
+
+function clampPos(pos: Position): Position {
+  return [Math.max(-180, Math.min(180, pos[0])), pos[1], ...pos.slice(2)];
+}
+
+function clampGeometry(geom: Geometry): Geometry {
+  switch (geom.type) {
+    case 'Polygon':
+      return { ...geom, coordinates: geom.coordinates.map((ring) => ring.map(clampPos)) };
+    case 'MultiPolygon':
+      return {
+        ...geom,
+        coordinates: geom.coordinates.map((poly) => poly.map((ring) => ring.map(clampPos))),
+      };
+    default:
+      return geom;
+  }
+}
+
+function clampFeatureCollection(fc: FeatureCollection<Geometry>): FeatureCollection<Geometry> {
+  return {
+    ...fc,
+    features: fc.features.map((f) => ({
+      ...f,
+      geometry: f.geometry ? clampGeometry(f.geometry) : f.geometry,
+    })),
+  };
+}
+
 export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapProps) {
+  const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
+
+  const handleLayerToggle = useCallback((id: TradeLaneCategory) => {
+    setActiveLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
   const geoData = useMemo(() => {
     const topo = topology as unknown as Topology;
-    return feature(topo, topo.objects.countries) as FeatureCollection<Geometry>;
+    const raw = feature(topo, topo.objects.countries) as FeatureCollection<Geometry>;
+    return clampFeatureCollection(raw);
   }, []);
 
   const style = useCallback(
@@ -40,14 +92,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
       const isSelected = id === selectedCountry;
 
       if (isSelected) {
-        return {
-          fillColor: '#fff',
-          fillOpacity: 0.35,
-          color: '#fff',
-          weight: 2.5,
-        };
+        return { fillColor: '#fff', fillOpacity: 0.35, color: '#fff', weight: 2.5 };
       }
-
       if (isSupported) {
         return {
           fillColor: getRegionColor(id),
@@ -56,13 +102,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
           weight: 0.8,
         };
       }
-
-      return {
-        fillColor: '#37474f',
-        fillOpacity: 0.3,
-        color: '#263238',
-        weight: 0.5,
-      };
+      return { fillColor: '#37474f', fillOpacity: 0.3, color: '#263238', weight: 0.5 };
     },
     [selectedCountry],
   );
@@ -83,22 +123,16 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
         mouseover: (e) => {
           if (!isSupported) return;
           const target = e.target;
-          if (id !== selectedCountry) {
-            target.setStyle({ fillOpacity: 0.8, weight: 1.5 });
-          }
+          if (id !== selectedCountry) target.setStyle({ fillOpacity: 0.8, weight: 1.5 });
           target.bringToFront();
         },
         mouseout: (e) => {
           if (!isSupported) return;
           const target = e.target;
-          if (id !== selectedCountry) {
-            target.setStyle({ fillOpacity: 0.55, weight: 0.8 });
-          }
+          if (id !== selectedCountry) target.setStyle({ fillOpacity: 0.55, weight: 0.8 });
         },
         click: () => {
-          if (isSupported) {
-            onCountrySelect(id === selectedCountry ? null : id);
-          }
+          if (isSupported) onCountrySelect(id === selectedCountry ? null : id);
         },
       });
     },
@@ -106,22 +140,33 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
   );
 
   return (
-    <MapContainer
-      center={[20, 0]}
-      zoom={2.5}
-      minZoom={2}
-      maxZoom={7}
-      zoomControl={false}
-      className="world-map"
-      maxBounds={[[-85, -200], [85, 200]]}
-      maxBoundsViscosity={1.0}
-    >
-      <ZoomControl position="bottomright" />
-      <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-      />
-      <GeoJSON key={selectedCountry || 'none'} data={geoData} style={style} onEachFeature={onEachFeature} />
-    </MapContainer>
+    <div className="map-wrapper">
+      <MapContainer
+        center={[20, 0]}
+        zoom={2.5}
+        minZoom={2}
+        maxZoom={7}
+        zoomControl={false}
+        className="world-map"
+        maxBounds={[[-85, -180], [85, 180]]}
+        maxBoundsViscosity={1.0}
+      >
+        <ZoomControl position="bottomright" />
+        <TileLayer
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+        />
+        <GeoJSON
+          key={selectedCountry || 'none'}
+          data={geoData}
+          style={style}
+          onEachFeature={onEachFeature}
+        />
+        <TradeLanesLayer activeLayers={activeLayers} />
+        <GeoLabels />
+      </MapContainer>
+
+      <LayerControl activeLayers={activeLayers} onToggle={handleLayerToggle} />
+    </div>
   );
 }

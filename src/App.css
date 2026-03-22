@@ -158,6 +158,12 @@ body {
 }
 
 /* ─── Map ───────────────────────────────────────── */
+.map-wrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
 .world-map {
   height: 100%;
   width: 100%;
@@ -179,6 +185,21 @@ body {
 }
 
 .country-tooltip::before {
+  border-top-color: var(--border) !important;
+}
+
+/* Trade lane / general tooltip dark theme */
+.leaflet-tooltip {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+  padding: 6px 10px !important;
+  font-size: 0.8rem !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-tooltip::before {
   border-top-color: var(--border) !important;
 }
 
@@ -500,6 +521,166 @@ body {
 
 .tab-content::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* ─── Geo Labels (progressive disclosure) ───────── */
+.geo-label-marker {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+.geo-label {
+  display: block;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  pointer-events: none;
+  font-family: inherit;
+  text-transform: uppercase;
+  text-shadow:
+    0 1px 4px rgba(0, 0, 0, 1),
+    0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.geo-label--ocean {
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.28em;
+  color: rgba(79, 195, 247, 0.45);
+}
+
+.geo-label--sea {
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: rgba(79, 195, 247, 0.32);
+}
+
+.geo-label--country {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: rgba(230, 237, 243, 0.65);
+}
+
+.geo-label--region {
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: rgba(230, 237, 243, 0.35);
+}
+
+.geo-label--feature {
+  font-size: 7.5px;
+  font-weight: 400;
+  letter-spacing: 0.09em;
+  font-style: italic;
+  color: rgba(230, 237, 243, 0.3);
+}
+
+/* ─── Layer Control ─────────────────────────────── */
+.layer-control {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 0.75rem;
+  z-index: 1000;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 190px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  pointer-events: all;
+}
+
+.layer-control-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-tertiary);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.layer-control-header:hover {
+  background: var(--accent-dim);
+}
+
+.layer-control-icon {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+}
+
+.layer-control-caret {
+  margin-left: auto;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.layer-control-list {
+  list-style: none;
+  padding: 0.25rem 0;
+}
+
+.layer-control-list li {
+  padding: 0;
+}
+
+.layer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.layer-toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+.layer-toggle.active {
+  color: var(--text-primary);
+}
+
+.layer-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1.5px solid;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.layer-label {
+  flex: 1;
+}
+
+.layer-status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 
 /* ─── Responsive ────────────────────────────────── */
