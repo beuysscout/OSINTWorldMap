@@ -1,4 +1,4 @@
-export type GeoLabelCategory = 'ocean' | 'sea' | 'country' | 'region' | 'feature';
+export type GeoLabelCategory = 'ocean' | 'sea' | 'region' | 'feature';
 
 export interface GeoLabel {
   id: string;
@@ -48,31 +48,6 @@ const seas: GeoLabel[] = [
   { id: 'celebes-sea',      name: 'Celebes Sea',       coordinates: [4,   122],   category: 'sea', minZoom: 5   },
 ];
 
-// ── Supported country labels — zoom-tiered by geographic size ────────────
-// Large countries: zoom 3.5+; medium: zoom 4+; smaller/denser: zoom 4.5+
-const countries: GeoLabel[] = [
-  { id: 'c-usa',  name: 'United States',      coordinates: [39,  -98],   category: 'country', minZoom: 3.5 },
-  { id: 'c-rus',  name: 'Russia',             coordinates: [62,   94],   category: 'country', minZoom: 3.5 },
-  { id: 'c-chn',  name: 'China',              coordinates: [35,  104],   category: 'country', minZoom: 3.5 },
-  { id: 'c-can',  name: 'Canada',             coordinates: [60,  -95],   category: 'country', minZoom: 3.5 },
-  { id: 'c-aus',  name: 'Australia',          coordinates: [-27, 133],   category: 'country', minZoom: 3.5 },
-  { id: 'c-bra',  name: 'Brazil',             coordinates: [-10,  -53],  category: 'country', minZoom: 3.5 },
-  { id: 'c-ind',  name: 'India',              coordinates: [22,   80],   category: 'country', minZoom: 4   },
-  { id: 'c-sau',  name: 'Saudi Arabia',       coordinates: [24,   45],   category: 'country', minZoom: 4   },
-  { id: 'c-arg',  name: 'Argentina',          coordinates: [-36,  -66],  category: 'country', minZoom: 4   },
-  { id: 'c-mex',  name: 'Mexico',             coordinates: [24,  -102],  category: 'country', minZoom: 4   },
-  { id: 'c-idn',  name: 'Indonesia',          coordinates: [-1,   118],  category: 'country', minZoom: 4   },
-  { id: 'c-egy',  name: 'Egypt',              coordinates: [27,   30],   category: 'country', minZoom: 4   },
-  { id: 'c-zaf',  name: 'South Africa',       coordinates: [-30,   25],  category: 'country', minZoom: 4   },
-  { id: 'c-tur',  name: 'Turkey',             coordinates: [39,   35],   category: 'country', minZoom: 4.5 },
-  { id: 'c-jpn',  name: 'Japan',              coordinates: [36,  138],   category: 'country', minZoom: 4.5 },
-  { id: 'c-kor',  name: 'South Korea',        coordinates: [36,  128],   category: 'country', minZoom: 5   },
-  { id: 'c-fra',  name: 'France',             coordinates: [46,    2],   category: 'country', minZoom: 5   },
-  { id: 'c-deu',  name: 'Germany',            coordinates: [51,   10],   category: 'country', minZoom: 5   },
-  { id: 'c-ita',  name: 'Italy',              coordinates: [43,   12],   category: 'country', minZoom: 5   },
-  { id: 'c-gbr',  name: 'United Kingdom',     coordinates: [54,   -2],   category: 'country', minZoom: 5   },
-];
-
 // ── Geopolitical regions — zoom 4.5+ ─────────────────────────────────────
 const regions: GeoLabel[] = [
   { id: 'r-sahara',        name: 'Sahara',             coordinates: [24,   12],   category: 'region', minZoom: 4   },
@@ -113,7 +88,6 @@ const features: GeoLabel[] = [
 export const geoLabels: GeoLabel[] = [
   ...oceans,
   ...seas,
-  ...countries,
   ...regions,
   ...features,
 ];

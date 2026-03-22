@@ -559,13 +559,6 @@ body {
   color: rgba(79, 195, 247, 0.32);
 }
 
-.geo-label--country {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: rgba(230, 237, 243, 0.65);
-}
-
 .geo-label--region {
   font-size: 8px;
   font-weight: 400;
