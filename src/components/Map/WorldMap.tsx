@@ -32,34 +32,60 @@ function getRegionColor(numericCode: string): string {
 }
 
 // ── Antimeridian fix ──────────────────────────────────────────────────────
-// world-atlas encodes Russia's Chukchi Peninsula with longitude > 180,
-// causing Leaflet to render a horizontal fill band across the entire map.
-// Clamping to [-180, 180] keeps polygons self-consistent and removes the artifact.
+// world-atlas pre-splits Russia at the antimeridian, leaving "seam edges"
+// where consecutive vertices jump ~358° in longitude (e.g. 178.6° → -180°).
+// Leaflet renders each seam edge as a line spanning the full map width,
+// producing the horizontal green band. Fix: split every ring at seam edges
+// and close each resulting segment as its own valid polygon ring.
 
-function clampPos(pos: Position): Position {
-  return [Math.max(-180, Math.min(180, pos[0])), pos[1], ...pos.slice(2)];
-}
+function splitRingAtSeams(ring: Position[]): Position[][] {
+  const n = ring.length - 1; // unique vertex count (ring is closed: last === first)
+  if (n < 3) return [ring];
 
-function clampGeometry(geom: Geometry): Geometry {
-  switch (geom.type) {
-    case 'Polygon':
-      return { ...geom, coordinates: geom.coordinates.map((ring) => ring.map(clampPos)) };
-    case 'MultiPolygon':
-      return {
-        ...geom,
-        coordinates: geom.coordinates.map((poly) => poly.map((ring) => ring.map(clampPos))),
-      };
-    default:
-      return geom;
+  let hasSeam = false;
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(ring[(i + 1) % n][0] - ring[i][0]) > 180) { hasSeam = true; break; }
   }
+  if (!hasSeam) return [ring];
+
+  const results: Position[][] = [];
+  let current: Position[] = [];
+
+  for (let i = 0; i < n; i++) {
+    current.push(ring[i]);
+    const nextLng = ring[(i + 1) % n][0];
+    if (Math.abs(nextLng - ring[i][0]) > 180) {
+      // Seam edge — close the current segment as its own polygon
+      if (current.length >= 3) results.push([...current, current[0]]);
+      current = [];
+    }
+  }
+  if (current.length >= 3) results.push([...current, current[0]]);
+
+  return results.length > 0 ? results : [ring];
 }
 
-function clampFeatureCollection(fc: FeatureCollection<Geometry>): FeatureCollection<Geometry> {
+function fixAntimeridian(geom: Geometry): Geometry {
+  if (geom.type === 'Polygon') {
+    const rings = geom.coordinates.flatMap(splitRingAtSeams);
+    if (rings.length === geom.coordinates.length) return { ...geom, coordinates: rings };
+    return { type: 'MultiPolygon', coordinates: rings.map((r) => [r]) };
+  }
+  if (geom.type === 'MultiPolygon') {
+    const polys = geom.coordinates.flatMap((poly) =>
+      poly.flatMap((ring) => splitRingAtSeams(ring).map((r) => [r])),
+    );
+    return { ...geom, coordinates: polys };
+  }
+  return geom;
+}
+
+function fixFeatureCollection(fc: FeatureCollection<Geometry>): FeatureCollection<Geometry> {
   return {
     ...fc,
     features: fc.features.map((f) => ({
       ...f,
-      geometry: f.geometry ? clampGeometry(f.geometry) : f.geometry,
+      geometry: f.geometry ? fixAntimeridian(f.geometry) : f.geometry,
     })),
   };
 }
@@ -82,7 +108,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
   const geoData = useMemo(() => {
     const topo = topology as unknown as Topology;
     const raw = feature(topo, topo.objects.countries) as FeatureCollection<Geometry>;
-    return clampFeatureCollection(raw);
+    return fixFeatureCollection(raw);
   }, []);
 
   const style = useCallback(
@@ -144,7 +170,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
       <MapContainer
         center={[20, 0]}
         zoom={2.5}
-        minZoom={2.5}
+        minZoom={2}
         maxZoom={7}
         zoomControl={false}
         className="world-map"
