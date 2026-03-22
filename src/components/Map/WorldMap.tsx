@@ -144,17 +144,19 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
       <MapContainer
         center={[20, 0]}
         zoom={2.5}
-        minZoom={2}
+        minZoom={2.5}
         maxZoom={7}
         zoomControl={false}
         className="world-map"
         maxBounds={[[-85, -180], [85, 180]]}
         maxBoundsViscosity={1.0}
+        worldCopyJump={false}
       >
         <ZoomControl position="bottomright" />
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+          noWrap={true}
         />
         <GeoJSON
           key={selectedCountry || 'none'}
