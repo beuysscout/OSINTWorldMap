@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import WorldMap from './components/Map/WorldMap';
 import InfoPanel from './components/Panel/InfoPanel';
-import Header from './components/UI/Header';
 import { countriesData, getCountryByNumericCode } from './data/countries';
 import { useLiveData } from './hooks/useCountryData';
 
@@ -34,21 +33,74 @@ export default function App() {
     setSelectedNumericCode(null);
   }, []);
 
+  const panelOpen = !!selectedCountry;
+
   return (
     <div className="app">
-      <Header
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onSearchSelect={handleSearchSelect}
-        suggestions={suggestions}
-      />
-      <main className={`app-main ${selectedCountry ? 'panel-open' : ''}`}>
-        <div className="map-container">
-          <WorldMap
-            selectedCountry={selectedNumericCode}
-            onCountrySelect={setSelectedNumericCode}
-          />
+      <main className={`app-main${panelOpen ? ' panel-open' : ''}`}>
+        {/* Map fills the entire viewport */}
+        <WorldMap
+          selectedCountry={selectedNumericCode}
+          onCountrySelect={setSelectedNumericCode}
+        />
+
+        {/* Floating UI layer — pointer-events disabled on wrapper, enabled per child */}
+        <div className="map-ui">
+          <div className="search-overlay">
+            {/* Brand + search card */}
+            <div className="search-card">
+              <div className="brand-mark">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                <span>OSINT World Map</span>
+              </div>
+
+              <div className="search-row">
+                <svg className="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search countries…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                  aria-label="Search countries"
+                />
+                {searchQuery && (
+                  <button
+                    className="search-clear"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Suggestions dropdown */}
+            {suggestions.length > 0 && searchQuery.length > 0 && (
+              <ul className="search-suggestions">
+                {suggestions.map((s) => (
+                  <li key={s.code} onClick={() => handleSearchSelect(s.numericCode)}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {s.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
+
+        {/* Country detail panel — slides in from left */}
         {selectedCountry && (
           <InfoPanel
             country={selectedCountry}
