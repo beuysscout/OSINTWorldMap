@@ -4,9 +4,13 @@ import {
   energyCorridors,
   briRoutes,
   chokepoints,
+  commodityFlows,
+  majorPorts,
+  pipelines,
+  submarineCables,
   LAYER_DEFS,
 } from '../../data/tradeLanes';
-import type { TradeLane, TradeLaneCategory } from '../../data/tradeLanes';
+import type { TradeLane, TradeLaneCategory, Port } from '../../data/tradeLanes';
 
 interface TradeLanesLayerProps {
   activeLayers: Set<TradeLaneCategory>;
@@ -16,15 +20,25 @@ const LAYER_COLORS: Record<TradeLaneCategory, string> = Object.fromEntries(
   LAYER_DEFS.map((d) => [d.id, d.color]),
 ) as Record<TradeLaneCategory, string>;
 
+// ── Route polyline ────────────────────────────────────────────────────────
+
+function dashArray(category: TradeLane['category']): string | undefined {
+  if (category === 'bri') return '6 4';
+  if (category === 'commodity') return '8 5';
+  if (category === 'pipelines') return '4 3';
+  if (category === 'cables') return '2 5';
+  return undefined;
+}
+
 function RouteLine({ lane, color }: { lane: TradeLane; color: string }) {
   return (
     <Polyline
       positions={lane.coordinates}
       pathOptions={{
         color,
-        weight: 1.5,
-        opacity: 0.65,
-        dashArray: lane.category === 'bri' ? '6 4' : undefined,
+        weight: lane.category === 'cables' ? 1 : 1.5,
+        opacity: lane.category === 'cables' ? 0.55 : 0.65,
+        dashArray: dashArray(lane.category),
       }}
     >
       <Tooltip sticky>
@@ -39,25 +53,51 @@ function RouteLine({ lane, color }: { lane: TradeLane; color: string }) {
   );
 }
 
+// ── Port marker ───────────────────────────────────────────────────────────
+
+const PORT_TEU_MAX = 47.3; // Shanghai
+const PORT_R_MIN = 4;
+const PORT_R_MAX = 11;
+
+function PortMarker({ port, color }: { port: Port; color: string }) {
+  const radius = PORT_R_MIN + (port.teuCapacity / PORT_TEU_MAX) * (PORT_R_MAX - PORT_R_MIN);
+
+  return (
+    <CircleMarker
+      center={port.coordinates}
+      radius={radius}
+      pathOptions={{ color, fillColor: color, fillOpacity: 0.75, weight: 1.5, opacity: 1 }}
+    >
+      <Tooltip>
+        <strong style={{ fontSize: '0.8rem' }}>
+          #{port.rank} {port.name}
+        </strong>
+        <div style={{ marginTop: 3, fontSize: '0.7rem', color, fontWeight: 700 }}>
+          {port.teuCapacity}M TEU / year · {port.country}
+        </div>
+        {port.description && (
+          <div style={{ marginTop: 4, fontSize: '0.72rem', maxWidth: 220 }}>
+            {port.description}
+          </div>
+        )}
+      </Tooltip>
+    </CircleMarker>
+  );
+}
+
+// ── Main layer component ──────────────────────────────────────────────────
+
 export default function TradeLanesLayer({ activeLayers }: TradeLanesLayerProps) {
-  const chokepointColor = LAYER_COLORS['chokepoints'];
+  const color = (cat: TradeLaneCategory) => LAYER_COLORS[cat];
 
   return (
     <>
+      {/* ── Maritime group ──────────────────────────────────── */}
       {activeLayers.has('shipping') &&
-        shippingLanes.map((lane) => (
-          <RouteLine key={lane.id} lane={lane} color={LAYER_COLORS['shipping']} />
-        ))}
+        shippingLanes.map((l) => <RouteLine key={l.id} lane={l} color={color('shipping')} />)}
 
       {activeLayers.has('energy') &&
-        energyCorridors.map((lane) => (
-          <RouteLine key={lane.id} lane={lane} color={LAYER_COLORS['energy']} />
-        ))}
-
-      {activeLayers.has('bri') &&
-        briRoutes.map((lane) => (
-          <RouteLine key={lane.id} lane={lane} color={LAYER_COLORS['bri']} />
-        ))}
+        energyCorridors.map((l) => <RouteLine key={l.id} lane={l} color={color('energy')} />)}
 
       {activeLayers.has('chokepoints') &&
         chokepoints.map((cp) => (
@@ -66,8 +106,8 @@ export default function TradeLanesLayer({ activeLayers }: TradeLanesLayerProps) 
             center={cp.coordinates}
             radius={6}
             pathOptions={{
-              color: chokepointColor,
-              fillColor: chokepointColor,
+              color: color('chokepoints'),
+              fillColor: color('chokepoints'),
               fillOpacity: 0.9,
               weight: 1.5,
               opacity: 1,
@@ -78,19 +118,29 @@ export default function TradeLanesLayer({ activeLayers }: TradeLanesLayerProps) 
               <div style={{ marginTop: 4, fontSize: '0.72rem', maxWidth: 220 }}>
                 {cp.description}
               </div>
-              <div
-                style={{
-                  marginTop: 4,
-                  fontSize: '0.7rem',
-                  color: chokepointColor,
-                  fontWeight: 600,
-                }}
-              >
+              <div style={{ marginTop: 4, fontSize: '0.7rem', color: color('chokepoints'), fontWeight: 600 }}>
                 {cp.throughput}
               </div>
             </Tooltip>
           </CircleMarker>
         ))}
+
+      {activeLayers.has('ports') &&
+        majorPorts.map((p) => <PortMarker key={p.id} port={p} color={color('ports')} />)}
+
+      {/* ── Trade Corridors group ───────────────────────────── */}
+      {activeLayers.has('bri') &&
+        briRoutes.map((l) => <RouteLine key={l.id} lane={l} color={color('bri')} />)}
+
+      {activeLayers.has('commodity') &&
+        commodityFlows.map((l) => <RouteLine key={l.id} lane={l} color={color('commodity')} />)}
+
+      {/* ── Infrastructure group ────────────────────────────── */}
+      {activeLayers.has('pipelines') &&
+        pipelines.map((l) => <RouteLine key={l.id} lane={l} color={color('pipelines')} />)}
+
+      {activeLayers.has('cables') &&
+        submarineCables.map((l) => <RouteLine key={l.id} lane={l} color={color('cables')} />)}
     </>
   );
 }

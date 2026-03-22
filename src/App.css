@@ -584,8 +584,9 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   min-width: 190px;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
   pointer-events: all;
 }
 
@@ -629,6 +630,26 @@ body {
 }
 
 .layer-control-list li {
+  padding: 0;
+}
+
+.layer-group-label {
+  display: block;
+  padding: 0.35rem 0.75rem 0.15rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+.layer-group:first-child .layer-group-label {
+  border-top: none;
+}
+
+.layer-group-items {
+  list-style: none;
   padding: 0;
 }
 

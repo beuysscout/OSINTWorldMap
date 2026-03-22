@@ -7,6 +7,24 @@ interface LayerControlProps {
   onToggle: (id: TradeLaneCategory) => void;
 }
 
+// Build a fast id → def lookup
+const LAYER_DEF_MAP = Object.fromEntries(LAYER_DEFS.map((d) => [d.id, d]));
+
+const LAYER_GROUPS: { label: string; ids: TradeLaneCategory[] }[] = [
+  {
+    label: 'Maritime',
+    ids: ['shipping', 'energy', 'chokepoints', 'ports'],
+  },
+  {
+    label: 'Trade Corridors',
+    ids: ['bri', 'commodity'],
+  },
+  {
+    label: 'Infrastructure',
+    ids: ['pipelines', 'cables'],
+  },
+];
+
 export default function LayerControl({ activeLayers, onToggle }: LayerControlProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -30,33 +48,41 @@ export default function LayerControl({ activeLayers, onToggle }: LayerControlPro
 
       {!collapsed && (
         <ul className="layer-control-list">
-          {LAYER_DEFS.map((layer) => {
-            const active = activeLayers.has(layer.id);
-            return (
-              <li key={layer.id}>
-                <button
-                  className={`layer-toggle ${active ? 'active' : ''}`}
-                  onClick={() => onToggle(layer.id)}
-                  title={layer.description}
-                >
-                  <span
-                    className="layer-swatch"
-                    style={{
-                      background: active ? layer.color : 'transparent',
-                      borderColor: layer.color,
-                    }}
-                  />
-                  <span className="layer-label">{layer.label}</span>
-                  <span
-                    className="layer-status"
-                    style={{ color: active ? layer.color : 'var(--text-muted)' }}
-                  >
-                    {active ? 'ON' : 'OFF'}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
+          {LAYER_GROUPS.map((group) => (
+            <li key={group.label} className="layer-group">
+              <span className="layer-group-label">{group.label}</span>
+              <ul className="layer-group-items">
+                {group.ids.map((id) => {
+                  const layer = LAYER_DEF_MAP[id];
+                  const active = activeLayers.has(id);
+                  return (
+                    <li key={id}>
+                      <button
+                        className={`layer-toggle ${active ? 'active' : ''}`}
+                        onClick={() => onToggle(id)}
+                        title={layer.description}
+                      >
+                        <span
+                          className="layer-swatch"
+                          style={{
+                            background: active ? layer.color : 'transparent',
+                            borderColor: layer.color,
+                          }}
+                        />
+                        <span className="layer-label">{layer.label}</span>
+                        <span
+                          className="layer-status"
+                          style={{ color: active ? layer.color : 'var(--text-muted)' }}
+                        >
+                          {active ? 'ON' : 'OFF'}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
         </ul>
       )}
     </div>
