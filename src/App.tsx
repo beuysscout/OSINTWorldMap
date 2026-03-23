@@ -68,16 +68,16 @@ export default function App() {
                   placeholder="Search countries…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input"
+                  className="input input-ghost flex-1 min-w-0 h-auto py-0 px-0 text-sm focus:outline-none bg-transparent border-none"
                   aria-label="Search countries"
                 />
                 {searchQuery && (
                   <button
-                    className="search-clear"
+                    className="btn btn-ghost btn-xs btn-circle"
                     onClick={() => setSearchQuery('')}
                     aria-label="Clear search"
                   >
-                    ×
+                    ✕
                   </button>
                 )}
               </div>

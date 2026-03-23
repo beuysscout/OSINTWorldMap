@@ -71,8 +71,8 @@ export default function LayerControl({ activeLayers, onToggle }: LayerControlPro
                         />
                         <span className="layer-label">{layer.label}</span>
                         <span
-                          className="layer-status"
-                          style={{ color: active ? layer.color : 'var(--text-muted)' }}
+                          className={`badge badge-xs font-bold ${active ? '' : 'opacity-40'}`}
+                          style={active ? { backgroundColor: layer.color, borderColor: layer.color, color: '#fff' } : { borderColor: 'currentColor' }}
                         >
                           {active ? 'ON' : 'OFF'}
                         </span>
