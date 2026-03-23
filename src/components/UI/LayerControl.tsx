@@ -1,14 +1,23 @@
 import { useState } from 'react';
 import { LAYER_DEFS } from '../../data/tradeLanes';
 import type { TradeLaneCategory } from '../../data/tradeLanes';
+import { NATURAL_LAYER_DEFS } from '../../data/naturalFeatures';
+import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
+import { MILITARY_LAYER_DEFS } from '../../data/militaryFeatures';
+import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 
 interface LayerControlProps {
   activeLayers: Set<TradeLaneCategory>;
   onToggle: (id: TradeLaneCategory) => void;
+  activeNaturalLayers: Set<NaturalFeatureCategory>;
+  onNaturalToggle: (id: NaturalFeatureCategory) => void;
+  activeMilitaryLayers: Set<MilitaryFeatureCategory>;
+  onMilitaryToggle: (id: MilitaryFeatureCategory) => void;
 }
 
-// Build a fast id → def lookup
+// Build fast id → def lookups
 const LAYER_DEF_MAP = Object.fromEntries(LAYER_DEFS.map((d) => [d.id, d]));
+const NATURAL_LAYER_DEF_MAP = Object.fromEntries(NATURAL_LAYER_DEFS.map((d) => [d.id, d]));
 
 const LAYER_GROUPS: { label: string; ids: TradeLaneCategory[] }[] = [
   {
@@ -25,7 +34,14 @@ const LAYER_GROUPS: { label: string; ids: TradeLaneCategory[] }[] = [
   },
 ];
 
-export default function LayerControl({ activeLayers, onToggle }: LayerControlProps) {
+export default function LayerControl({
+  activeLayers,
+  onToggle,
+  activeNaturalLayers,
+  onNaturalToggle,
+  activeMilitaryLayers,
+  onMilitaryToggle,
+}: LayerControlProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -83,6 +99,74 @@ export default function LayerControl({ activeLayers, onToggle }: LayerControlPro
               </ul>
             </li>
           ))}
+
+          {/* Military group */}
+          <li className="layer-group">
+            <span className="layer-group-label">Military</span>
+            <ul className="layer-group-items">
+              {MILITARY_LAYER_DEFS.map((def) => {
+                const active = activeMilitaryLayers.has(def.id);
+                return (
+                  <li key={def.id}>
+                    <button
+                      className={`layer-toggle ${active ? 'active' : ''}`}
+                      onClick={() => onMilitaryToggle(def.id)}
+                      title={def.description}
+                    >
+                      <span
+                        className="layer-swatch"
+                        style={{
+                          background: active ? def.color : 'transparent',
+                          borderColor: def.color,
+                        }}
+                      />
+                      <span className="layer-label">{def.label}</span>
+                      <span
+                        className={`badge badge-xs font-bold ${active ? '' : 'opacity-40'}`}
+                        style={active ? { backgroundColor: def.color, borderColor: def.color, color: '#fff' } : { borderColor: 'currentColor' }}
+                      >
+                        {active ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+
+          {/* Natural Borders group */}
+          <li className="layer-group">
+            <span className="layer-group-label">Natural Borders</span>
+            <ul className="layer-group-items">
+              {NATURAL_LAYER_DEFS.map((def) => {
+                const active = activeNaturalLayers.has(def.id);
+                return (
+                  <li key={def.id}>
+                    <button
+                      className={`layer-toggle ${active ? 'active' : ''}`}
+                      onClick={() => onNaturalToggle(def.id)}
+                      title={def.description}
+                    >
+                      <span
+                        className="layer-swatch"
+                        style={{
+                          background: active ? def.color : 'transparent',
+                          borderColor: def.color,
+                        }}
+                      />
+                      <span className="layer-label">{def.label}</span>
+                      <span
+                        className={`badge badge-xs font-bold ${active ? '' : 'opacity-40'}`}
+                        style={active ? { backgroundColor: def.color, borderColor: def.color, color: '#fff' } : { borderColor: 'currentColor' }}
+                      >
+                        {active ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
         </ul>
       )}
     </div>

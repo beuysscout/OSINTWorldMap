@@ -709,3 +709,6 @@ export const getCountryByNumericCode = (numericCode: string): CountryStaticData 
 export const supportedCountryCodes = new Set(
   Object.values(countriesData).map((c) => c.numericCode),
 );
+
+// Alpha-3 based lookups for Mapbox vector tileset integration
+export const supportedAlpha3Codes = new Set(Object.keys(countriesData));
