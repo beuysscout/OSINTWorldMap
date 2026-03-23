@@ -22,44 +22,29 @@ interface WorldMapProps {
 }
 
 // ── Antimeridian fix ──────────────────────────────────────────────────────
+// Mapbox GL handles coordinates outside ±180° correctly. Normalize each ring
+// so consecutive longitude jumps never exceed 180°, keeping the ring
+// continuous rather than splitting it into disconnected fragments.
 
-function splitRingAtSeams(ring: Position[]): Position[][] {
-  const n = ring.length - 1;
-  if (n < 3) return [ring];
-
-  let hasSeam = false;
-  for (let i = 0; i < n; i++) {
-    if (Math.abs(ring[(i + 1) % n][0] - ring[i][0]) > 180) { hasSeam = true; break; }
+function normalizeRingLongitudes(ring: Position[]): Position[] {
+  if (ring.length === 0) return ring;
+  const result: Position[] = [ring[0]];
+  for (let i = 1; i < ring.length; i++) {
+    let lng = ring[i][0];
+    const diff = lng - result[i - 1][0];
+    if (diff > 180) lng -= 360;
+    else if (diff < -180) lng += 360;
+    result.push(ring[i].length > 2 ? [lng, ring[i][1], ...ring[i].slice(2)] : [lng, ring[i][1]]);
   }
-  if (!hasSeam) return [ring];
-
-  const results: Position[][] = [];
-  let current: Position[] = [];
-
-  for (let i = 0; i < n; i++) {
-    current.push(ring[i]);
-    const nextLng = ring[(i + 1) % n][0];
-    if (Math.abs(nextLng - ring[i][0]) > 180) {
-      if (current.length >= 3) results.push([...current, current[0]]);
-      current = [];
-    }
-  }
-  if (current.length >= 3) results.push([...current, current[0]]);
-
-  return results.length > 0 ? results : [ring];
+  return result;
 }
 
 function fixAntimeridian(geom: Geometry): Geometry {
   if (geom.type === 'Polygon') {
-    const rings = geom.coordinates.flatMap(splitRingAtSeams);
-    if (rings.length === geom.coordinates.length) return { ...geom, coordinates: rings };
-    return { type: 'MultiPolygon', coordinates: rings.map((r) => [r]) };
+    return { ...geom, coordinates: geom.coordinates.map(normalizeRingLongitudes) };
   }
   if (geom.type === 'MultiPolygon') {
-    const polys = geom.coordinates.flatMap((poly) =>
-      poly.flatMap((ring) => splitRingAtSeams(ring).map((r) => [r])),
-    );
-    return { ...geom, coordinates: polys };
+    return { ...geom, coordinates: geom.coordinates.map((poly) => poly.map(normalizeRingLongitudes)) };
   }
   return geom;
 }
