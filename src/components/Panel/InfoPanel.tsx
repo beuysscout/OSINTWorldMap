@@ -45,14 +45,19 @@ export default function InfoPanel({ country, liveData, indicators, loading, onCl
             <span className="capital">{country.capital} &middot; {country.region}</span>
           </div>
         </div>
-        <button className="close-btn" onClick={onClose} aria-label="Close panel">&times;</button>
+        <button className="btn btn-ghost btn-sm btn-circle text-base-content/50" onClick={onClose} aria-label="Close panel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </div>
 
-      <div className="tab-bar">
+      <div role="tablist" className="tabs tabs-border w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+            role="tab"
+            className={`tab text-xs font-medium whitespace-nowrap${activeTab === tab.id ? ' tab-active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
@@ -60,7 +65,7 @@ export default function InfoPanel({ country, liveData, indicators, loading, onCl
         ))}
       </div>
 
-      <div className="tab-content">
+      <div className="panel-body">
         {activeTab === 'overview' && (
           <OverviewTab country={country} liveData={liveData} indicators={indicators} loading={loading} />
         )}
@@ -88,7 +93,12 @@ function OverviewTab({
     <div className="tab-overview">
       <p className="overview-text">{country.overview}</p>
 
-      {loading && <div className="loading-indicator">Loading live data...</div>}
+      {loading && (
+        <div className="flex items-center gap-2 py-1 text-sm" style={{ color: 'var(--accent)' }}>
+          <span className="loading loading-spinner loading-xs" />
+          Loading live data…
+        </div>
+      )}
 
       <div className="stats-grid">
         <div className="stat-card">
@@ -134,12 +144,12 @@ function OverviewTab({
 function HistoryTab({ country }: { country: CountryStaticData }) {
   return (
     <div className="tab-history">
-      <div className="timeline">
+      <div className="hist-timeline">
         {country.history.map((entry, i) => (
-          <div key={i} className="timeline-entry">
-            <div className="timeline-marker" />
-            <div className="timeline-content">
-              <span className="timeline-period">{entry.period}</span>
+          <div key={i} className="hist-entry">
+            <div className="hist-marker" />
+            <div className="hist-content">
+              <span className="hist-period">{entry.period}</span>
               <h4>{entry.title}</h4>
               <p>{entry.description}</p>
             </div>
@@ -163,7 +173,12 @@ function EconomicsTab({
     <div className="tab-economics">
       <p>{country.economics.summary}</p>
 
-      {loading && <div className="loading-indicator">Loading indicators...</div>}
+      {loading && (
+        <div className="flex items-center gap-2 py-1 text-sm" style={{ color: 'var(--accent)' }}>
+          <span className="loading loading-spinner loading-xs" />
+          Loading indicators…
+        </div>
+      )}
 
       {indicators && (
         <div className="stats-grid" style={{ marginBottom: '1rem' }}>
@@ -182,7 +197,7 @@ function EconomicsTab({
         <h4>Key Sectors</h4>
         <div className="tag-list">
           {country.economics.keySectors.map((s) => (
-            <span key={s} className="tag">{s}</span>
+            <span key={s} className="badge badge-outline badge-primary badge-sm">{s}</span>
           ))}
         </div>
       </div>
@@ -191,7 +206,7 @@ function EconomicsTab({
         <h4>Major Trade Partners</h4>
         <div className="tag-list">
           {country.economics.tradePartners.map((p) => (
-            <span key={p} className="tag tag-partner">{p}</span>
+            <span key={p} className="badge badge-outline badge-success badge-sm">{p}</span>
           ))}
         </div>
       </div>
@@ -222,7 +237,7 @@ function GeopoliticsTab({ country }: { country: CountryStaticData }) {
         <h4>Alliances &amp; Organizations</h4>
         <div className="tag-list">
           {country.geopolitics.alliances.map((a) => (
-            <span key={a} className="tag tag-alliance">{a}</span>
+            <span key={a} className="badge badge-outline badge-info badge-sm">{a}</span>
           ))}
         </div>
       </div>
@@ -232,7 +247,7 @@ function GeopoliticsTab({ country }: { country: CountryStaticData }) {
           <h4>Tensions &amp; Rivals</h4>
           <div className="tag-list">
             {country.geopolitics.rivals.map((r) => (
-              <span key={r} className="tag tag-rival">{r}</span>
+              <span key={r} className="badge badge-outline badge-error badge-sm">{r}</span>
             ))}
           </div>
         </div>
@@ -259,7 +274,7 @@ function CultureTab({ country }: { country: CountryStaticData }) {
         <h4>Languages</h4>
         <div className="tag-list">
           {country.culture.languages.map((l) => (
-            <span key={l} className="tag">{l}</span>
+            <span key={l} className="badge badge-outline badge-primary badge-sm">{l}</span>
           ))}
         </div>
       </div>
@@ -268,7 +283,7 @@ function CultureTab({ country }: { country: CountryStaticData }) {
         <h4>Religions</h4>
         <div className="tag-list">
           {country.culture.religions.map((r) => (
-            <span key={r} className="tag">{r}</span>
+            <span key={r} className="badge badge-outline badge-primary badge-sm">{r}</span>
           ))}
         </div>
       </div>
