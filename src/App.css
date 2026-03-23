@@ -1,4 +1,4 @@
-@import 'leaflet/dist/leaflet.css';
+/* mapbox-gl CSS is imported in main.tsx */
 
 /* ─── Reset & Base ──────────────────────────────── */
 *,
@@ -68,12 +68,9 @@ body {
 .world-map {
   height: 100%;
   width: 100%;
-  background: var(--surface-0);
 }
 
-.leaflet-container {
-  background: #0c1620 !important;
-}
+/* Mapbox GL canvas fills container automatically */
 
 /* ─── Floating UI Layer ─────────────────────────── */
 /* Covers the full viewport; children opt-in to pointer events */
@@ -349,92 +346,100 @@ body {
   flex-shrink: 0;
 }
 
-/* ─── Zoom Controls ─────────────────────────────── */
-.leaflet-control-zoom {
-  border: none !important;
+/* ─── Zoom Controls (Mapbox GL) ─────────────────── */
+.mapboxgl-ctrl-group {
   border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: var(--shadow-md) !important;
+  border: none !important;
 }
 
-.leaflet-control-zoom a {
+.mapboxgl-ctrl-group button {
   background: rgba(27, 40, 64, 0.94) !important;
   backdrop-filter: blur(14px) !important;
   color: var(--text-2) !important;
   border: none !important;
   border-bottom: 1px solid var(--border) !important;
-  font-size: 17px !important;
   width: 36px !important;
   height: 36px !important;
-  line-height: 36px !important;
-  transition: background 0.15s, color 0.15s !important;
+  transition: background 0.15s !important;
 }
 
-.leaflet-control-zoom a:last-child {
+.mapboxgl-ctrl-group button:last-child {
   border-bottom: none !important;
 }
 
-.leaflet-control-zoom a:hover {
+.mapboxgl-ctrl-group button:hover {
   background: var(--surface-3) !important;
-  color: var(--text-1) !important;
+}
+
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+  filter: invert(1) opacity(0.6) !important;
+}
+
+.mapboxgl-ctrl-group button:hover .mapboxgl-ctrl-icon {
+  filter: invert(1) opacity(0.9) !important;
 }
 
 /* ─── Attribution ───────────────────────────────── */
-.leaflet-control-attribution {
+.mapboxgl-ctrl-attrib {
   background: rgba(14, 23, 36, 0.72) !important;
   backdrop-filter: blur(8px) !important;
   color: var(--text-3) !important;
   font-size: 0.63rem !important;
   border-radius: 6px 0 0 0 !important;
-  border: none !important;
-  padding: 2px 6px !important;
 }
 
-.leaflet-control-attribution a {
+.mapboxgl-ctrl-attrib a {
   color: var(--accent) !important;
 }
 
-/* ─── Tooltips ──────────────────────────────────── */
-.leaflet-tooltip {
-  background: rgba(20, 30, 46, 0.97) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: var(--text-1) !important;
-  padding: 7px 12px !important;
-  font-size: 0.8rem !important;
-  font-family: 'Inter', sans-serif !important;
-  border-radius: 9px !important;
-  box-shadow: var(--shadow-sm) !important;
+/* ─── Map Tooltip ───────────────────────────────── */
+.map-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  background: rgba(20, 30, 46, 0.97);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-1);
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  border-radius: 9px;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  max-width: 260px;
+  white-space: normal;
 }
 
-.leaflet-tooltip::before {
-  border-top-color: rgba(255, 255, 255, 0.1) !important;
+.map-tooltip strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-1);
 }
 
-.country-tooltip {
-  background: rgba(20, 30, 46, 0.97) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: var(--text-1) !important;
-  padding: 5px 11px !important;
-  font-size: 0.8rem !important;
-  font-weight: 500 !important;
-  font-family: 'Inter', sans-serif !important;
-  border-radius: 9px !important;
-  box-shadow: var(--shadow-sm) !important;
+.map-tooltip .tooltip-sub {
+  margin-top: 3px;
+  font-size: 0.72rem;
+  color: var(--text-2);
 }
 
-.country-tooltip::before {
-  border-top-color: rgba(255, 255, 255, 0.1) !important;
+.map-tooltip .tooltip-stat {
+  margin-top: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.map-tooltip .tooltip-desc {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--text-2);
+  max-width: 220px;
 }
 
 /* ─── Geo Labels ────────────────────────────────── */
-.geo-label-marker {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  pointer-events: none !important;
-}
 
 .geo-label {
   display: block;
@@ -444,7 +449,7 @@ body {
   pointer-events: none;
   font-family: 'Inter', sans-serif;
   text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 14px rgba(0, 0, 0, 0.75);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 10px rgba(255, 255, 255, 0.6);
 }
 
 .geo-label--ocean {

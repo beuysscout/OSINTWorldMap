@@ -1,4 +1,7 @@
-import { Polyline, CircleMarker, Tooltip } from 'react-leaflet';
+import { useMemo } from 'react';
+import { Source, Layer } from 'react-map-gl/mapbox';
+import type { LayerProps } from 'react-map-gl/mapbox';
+import type { FeatureCollection, LineString, Point } from 'geojson';
 import {
   shippingLanes,
   energyCorridors,
@@ -10,137 +13,225 @@ import {
   submarineCables,
   LAYER_DEFS,
 } from '../../data/tradeLanes';
-import type { TradeLane, TradeLaneCategory, Port } from '../../data/tradeLanes';
+import type { TradeLaneCategory } from '../../data/tradeLanes';
+
+export const TRADE_LINE_LAYER_IDS = [
+  'trade-lines-shipping',
+  'trade-lines-energy',
+  'trade-lines-bri',
+  'trade-lines-commodity',
+  'trade-lines-pipelines',
+  'trade-lines-cables',
+] as const;
+
+export const TRADE_POINT_LAYER_IDS = [
+  'trade-points-ports',
+  'trade-points-chokepoints',
+] as const;
+
+export const ALL_TRADE_LAYER_IDS: string[] = [
+  ...TRADE_LINE_LAYER_IDS,
+  ...TRADE_POINT_LAYER_IDS,
+];
 
 interface TradeLanesLayerProps {
   activeLayers: Set<TradeLaneCategory>;
 }
 
-const LAYER_COLORS: Record<TradeLaneCategory, string> = Object.fromEntries(
+const COLORS = Object.fromEntries(
   LAYER_DEFS.map((d) => [d.id, d.color]),
 ) as Record<TradeLaneCategory, string>;
 
-// ── Route polyline ────────────────────────────────────────────────────────
-
-function dashArray(category: TradeLane['category']): string | undefined {
-  if (category === 'bri') return '6 4';
-  if (category === 'commodity') return '8 5';
-  if (category === 'pipelines') return '4 3';
-  if (category === 'cables') return '2 5';
-  return undefined;
+// Leaflet uses [lat, lng]; GeoJSON/Mapbox uses [lng, lat]
+function toGeoCoord(coord: [number, number]): [number, number] {
+  return [coord[1], coord[0]];
 }
-
-function RouteLine({ lane, color }: { lane: TradeLane; color: string }) {
-  return (
-    <Polyline
-      positions={lane.coordinates}
-      pathOptions={{
-        color,
-        weight: lane.category === 'cables' ? 1 : 1.5,
-        opacity: lane.category === 'cables' ? 0.55 : 0.65,
-        dashArray: dashArray(lane.category),
-      }}
-    >
-      <Tooltip sticky>
-        <strong style={{ fontSize: '0.8rem' }}>{lane.name}</strong>
-        {lane.description && (
-          <div style={{ marginTop: 4, fontSize: '0.72rem', maxWidth: 220 }}>
-            {lane.description}
-          </div>
-        )}
-      </Tooltip>
-    </Polyline>
-  );
-}
-
-// ── Port marker ───────────────────────────────────────────────────────────
-
-const PORT_TEU_MAX = 47.3; // Shanghai
-const PORT_R_MIN = 4;
-const PORT_R_MAX = 11;
-
-function PortMarker({ port, color }: { port: Port; color: string }) {
-  const radius = PORT_R_MIN + (port.teuCapacity / PORT_TEU_MAX) * (PORT_R_MAX - PORT_R_MIN);
-
-  return (
-    <CircleMarker
-      center={port.coordinates}
-      radius={radius}
-      pathOptions={{ color, fillColor: color, fillOpacity: 0.75, weight: 1.5, opacity: 1 }}
-    >
-      <Tooltip>
-        <strong style={{ fontSize: '0.8rem' }}>
-          #{port.rank} {port.name}
-        </strong>
-        <div style={{ marginTop: 3, fontSize: '0.7rem', color, fontWeight: 700 }}>
-          {port.teuCapacity}M TEU / year · {port.country}
-        </div>
-        {port.description && (
-          <div style={{ marginTop: 4, fontSize: '0.72rem', maxWidth: 220 }}>
-            {port.description}
-          </div>
-        )}
-      </Tooltip>
-    </CircleMarker>
-  );
-}
-
-// ── Main layer component ──────────────────────────────────────────────────
 
 export default function TradeLanesLayer({ activeLayers }: TradeLanesLayerProps) {
-  const color = (cat: TradeLaneCategory) => LAYER_COLORS[cat];
+  const linesGeoJSON = useMemo<FeatureCollection<LineString>>(() => ({
+    type: 'FeatureCollection',
+    features: [
+      ...shippingLanes.map((l) => ({
+        type: 'Feature' as const,
+        id: l.id,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: l.coordinates.map(toGeoCoord),
+        },
+        properties: { category: l.category, name: l.name, description: l.description ?? null },
+      })),
+      ...energyCorridors.map((l) => ({
+        type: 'Feature' as const,
+        id: l.id,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: l.coordinates.map(toGeoCoord),
+        },
+        properties: { category: l.category, name: l.name, description: l.description ?? null },
+      })),
+      ...briRoutes.map((l) => ({
+        type: 'Feature' as const,
+        id: l.id,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: l.coordinates.map(toGeoCoord),
+        },
+        properties: { category: l.category, name: l.name, description: l.description ?? null },
+      })),
+      ...commodityFlows.map((l) => ({
+        type: 'Feature' as const,
+        id: l.id,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: l.coordinates.map(toGeoCoord),
+        },
+        properties: { category: l.category, name: l.name, description: l.description ?? null },
+      })),
+      ...pipelines.map((l) => ({
+        type: 'Feature' as const,
+        id: l.id,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: l.coordinates.map(toGeoCoord),
+        },
+        properties: { category: l.category, name: l.name, description: l.description ?? null },
+      })),
+      ...submarineCables.map((l) => ({
+        type: 'Feature' as const,
+        id: l.id,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: l.coordinates.map(toGeoCoord),
+        },
+        properties: { category: l.category, name: l.name, description: l.description ?? null },
+      })),
+    ],
+  }), []);
+
+  const pointsGeoJSON = useMemo<FeatureCollection<Point>>(() => ({
+    type: 'FeatureCollection',
+    features: [
+      ...majorPorts.map((p) => ({
+        type: 'Feature' as const,
+        id: p.id,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: toGeoCoord(p.coordinates),
+        },
+        properties: {
+          category: 'ports' as const,
+          name: p.name,
+          country: p.country,
+          teuCapacity: p.teuCapacity,
+          rank: p.rank,
+          description: p.description ?? null,
+          color: COLORS.ports,
+        },
+      })),
+      ...chokepoints.map((cp) => ({
+        type: 'Feature' as const,
+        id: cp.id,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: toGeoCoord(cp.coordinates),
+        },
+        properties: {
+          category: 'chokepoints' as const,
+          name: cp.name,
+          description: cp.description,
+          throughput: cp.throughput,
+          color: COLORS.chokepoints,
+        },
+      })),
+    ],
+  }), []);
+
+  function vis(cat: TradeLaneCategory): LayerProps['layout'] {
+    return { visibility: activeLayers.has(cat) ? 'visible' : 'none' };
+  }
 
   return (
     <>
-      {/* ── Maritime group ──────────────────────────────────── */}
-      {activeLayers.has('shipping') &&
-        shippingLanes.map((l) => <RouteLine key={l.id} lane={l} color={color('shipping')} />)}
+      <Source id="trade-lines" type="geojson" data={linesGeoJSON}>
+        <Layer
+          id="trade-lines-shipping"
+          type="line"
+          filter={['==', ['get', 'category'], 'shipping']}
+          layout={vis('shipping')}
+          paint={{ 'line-color': COLORS.shipping, 'line-width': 1.5, 'line-opacity': 0.65 }}
+        />
+        <Layer
+          id="trade-lines-energy"
+          type="line"
+          filter={['==', ['get', 'category'], 'energy']}
+          layout={vis('energy')}
+          paint={{ 'line-color': COLORS.energy, 'line-width': 1.5, 'line-opacity': 0.65 }}
+        />
+        <Layer
+          id="trade-lines-bri"
+          type="line"
+          filter={['==', ['get', 'category'], 'bri']}
+          layout={vis('bri')}
+          paint={{ 'line-color': COLORS.bri, 'line-width': 1.5, 'line-opacity': 0.65, 'line-dasharray': [6, 4] }}
+        />
+        <Layer
+          id="trade-lines-commodity"
+          type="line"
+          filter={['==', ['get', 'category'], 'commodity']}
+          layout={vis('commodity')}
+          paint={{ 'line-color': COLORS.commodity, 'line-width': 1.5, 'line-opacity': 0.65, 'line-dasharray': [8, 5] }}
+        />
+        <Layer
+          id="trade-lines-pipelines"
+          type="line"
+          filter={['==', ['get', 'category'], 'pipelines']}
+          layout={vis('pipelines')}
+          paint={{ 'line-color': COLORS.pipelines, 'line-width': 1.5, 'line-opacity': 0.65, 'line-dasharray': [4, 3] }}
+        />
+        <Layer
+          id="trade-lines-cables"
+          type="line"
+          filter={['==', ['get', 'category'], 'cables']}
+          layout={vis('cables')}
+          paint={{ 'line-color': COLORS.cables, 'line-width': 1, 'line-opacity': 0.55, 'line-dasharray': [2, 5] }}
+        />
+      </Source>
 
-      {activeLayers.has('energy') &&
-        energyCorridors.map((l) => <RouteLine key={l.id} lane={l} color={color('energy')} />)}
-
-      {activeLayers.has('chokepoints') &&
-        chokepoints.map((cp) => (
-          <CircleMarker
-            key={cp.id}
-            center={cp.coordinates}
-            radius={6}
-            pathOptions={{
-              color: color('chokepoints'),
-              fillColor: color('chokepoints'),
-              fillOpacity: 0.9,
-              weight: 1.5,
-              opacity: 1,
-            }}
-          >
-            <Tooltip>
-              <strong style={{ fontSize: '0.8rem' }}>{cp.name}</strong>
-              <div style={{ marginTop: 4, fontSize: '0.72rem', maxWidth: 220 }}>
-                {cp.description}
-              </div>
-              <div style={{ marginTop: 4, fontSize: '0.7rem', color: color('chokepoints'), fontWeight: 600 }}>
-                {cp.throughput}
-              </div>
-            </Tooltip>
-          </CircleMarker>
-        ))}
-
-      {activeLayers.has('ports') &&
-        majorPorts.map((p) => <PortMarker key={p.id} port={p} color={color('ports')} />)}
-
-      {/* ── Trade Corridors group ───────────────────────────── */}
-      {activeLayers.has('bri') &&
-        briRoutes.map((l) => <RouteLine key={l.id} lane={l} color={color('bri')} />)}
-
-      {activeLayers.has('commodity') &&
-        commodityFlows.map((l) => <RouteLine key={l.id} lane={l} color={color('commodity')} />)}
-
-      {/* ── Infrastructure group ────────────────────────────── */}
-      {activeLayers.has('pipelines') &&
-        pipelines.map((l) => <RouteLine key={l.id} lane={l} color={color('pipelines')} />)}
-
-      {activeLayers.has('cables') &&
-        submarineCables.map((l) => <RouteLine key={l.id} lane={l} color={color('cables')} />)}
+      <Source id="trade-points" type="geojson" data={pointsGeoJSON}>
+        <Layer
+          id="trade-points-ports"
+          type="circle"
+          filter={['==', ['get', 'category'], 'ports']}
+          layout={vis('ports')}
+          paint={{
+            'circle-color': COLORS.ports,
+            'circle-opacity': 0.75,
+            'circle-stroke-color': COLORS.ports,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-opacity': 1,
+            'circle-radius': [
+              'interpolate', ['linear'],
+              ['get', 'teuCapacity'],
+              0, 4,
+              47.3, 11,
+            ],
+          }}
+        />
+        <Layer
+          id="trade-points-chokepoints"
+          type="circle"
+          filter={['==', ['get', 'category'], 'chokepoints']}
+          layout={vis('chokepoints')}
+          paint={{
+            'circle-color': COLORS.chokepoints,
+            'circle-opacity': 0.9,
+            'circle-stroke-color': COLORS.chokepoints,
+            'circle-stroke-width': 1.5,
+            'circle-stroke-opacity': 1,
+            'circle-radius': 6,
+          }}
+        />
+      </Source>
     </>
   );
 }

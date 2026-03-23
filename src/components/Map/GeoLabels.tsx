@@ -1,28 +1,17 @@
-import { Marker, useMap, useMapEvents } from 'react-leaflet';
-import { divIcon } from 'leaflet';
-import { useState, useMemo } from 'react';
+import { Marker, useMap } from 'react-map-gl/mapbox';
+import { useState, useEffect, useMemo } from 'react';
 import { geoLabels } from '../../data/geoLabels';
 
-// Icons are stable — create once and reuse
-const icons = new Map(
-  geoLabels.map((l) => [
-    l.id,
-    divIcon({
-      html: `<span class="geo-label geo-label--${l.category}">${l.name}</span>`,
-      className: 'geo-label-marker',
-      iconSize: [0, 0],
-      iconAnchor: [0, 0],
-    }),
-  ]),
-);
-
 export default function GeoLabels() {
-  const map = useMap();
-  const [zoom, setZoom] = useState(() => map.getZoom());
+  const { current: map } = useMap();
+  const [zoom, setZoom] = useState(() => map?.getZoom() ?? 2.5);
 
-  useMapEvents({
-    zoomend: () => setZoom(map.getZoom()),
-  });
+  useEffect(() => {
+    if (!map) return;
+    const onZoom = () => setZoom(map.getZoom());
+    map.on('zoom', onZoom);
+    return () => { map.off('zoom', onZoom); };
+  }, [map]);
 
   const visible = useMemo(
     () => geoLabels.filter((l) => zoom >= l.minZoom && (!l.maxZoom || zoom <= l.maxZoom)),
@@ -34,12 +23,14 @@ export default function GeoLabels() {
       {visible.map((label) => (
         <Marker
           key={label.id}
-          position={label.coordinates}
-          icon={icons.get(label.id)!}
-          interactive={false}
-          keyboard={false}
-          zIndexOffset={-1000}
-        />
+          longitude={label.coordinates[1]}
+          latitude={label.coordinates[0]}
+          style={{ pointerEvents: 'none' }}
+        >
+          <span className={`geo-label geo-label--${label.category}`}>
+            {label.name}
+          </span>
+        </Marker>
       ))}
     </>
   );
