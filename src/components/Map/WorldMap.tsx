@@ -6,47 +6,20 @@ import Map, {
   type MapMouseEvent,
 } from 'react-map-gl/mapbox';
 import { useMemo, useCallback, useState, useRef, useEffect, type ReactNode } from 'react';
-import { feature } from 'topojson-client';
-import type { Topology } from 'topojson-specification';
-import type { FeatureCollection, Geometry, Position } from 'geojson';
-import topology from 'world-atlas/countries-110m.json';
-import { supportedCountryCodes, getCountryByNumericCode } from '../../data/countries';
+import { supportedAlpha3Codes } from '../../data/countries';
 import TradeLanesLayer, { ALL_TRADE_LAYER_IDS } from './TradeLanesLayer';
+import NaturalFeaturesLayer, { NATURAL_INTERACTIVE_LAYER_IDS } from './NaturalFeaturesLayer';
+import MilitaryLayer, { MILITARY_INTERACTIVE_LAYER_IDS } from './MilitaryLayer';
 import GeoLabels from './GeoLabels';
 import LayerControl from '../UI/LayerControl';
 import type { TradeLaneCategory } from '../../data/tradeLanes';
+import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
+import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
+import { NATION_LABELS } from '../../data/militaryFeatures';
 
 interface WorldMapProps {
-  selectedCountry: string | null;
-  onCountrySelect: (numericCode: string | null) => void;
-}
-
-// ── Antimeridian fix ──────────────────────────────────────────────────────
-// Mapbox GL handles coordinates outside ±180° correctly. Normalize each ring
-// so consecutive longitude jumps never exceed 180°, keeping the ring
-// continuous rather than splitting it into disconnected fragments.
-
-function normalizeRingLongitudes(ring: Position[]): Position[] {
-  if (ring.length === 0) return ring;
-  const result: Position[] = [ring[0]];
-  for (let i = 1; i < ring.length; i++) {
-    let lng = ring[i][0];
-    const diff = lng - result[i - 1][0];
-    if (diff > 180) lng -= 360;
-    else if (diff < -180) lng += 360;
-    result.push(ring[i].length > 2 ? [lng, ring[i][1], ...ring[i].slice(2)] : [lng, ring[i][1]]);
-  }
-  return result;
-}
-
-function fixAntimeridian(geom: Geometry): Geometry {
-  if (geom.type === 'Polygon') {
-    return { ...geom, coordinates: geom.coordinates.map(normalizeRingLongitudes) };
-  }
-  if (geom.type === 'MultiPolygon') {
-    return { ...geom, coordinates: geom.coordinates.map((poly) => poly.map(normalizeRingLongitudes)) };
-  }
-  return geom;
+  selectedCountry: string | null; // alpha-3 ISO code
+  onCountrySelect: (alpha3: string | null) => void;
 }
 
 // ── Tooltip builder ───────────────────────────────────────────────────────
@@ -79,7 +52,6 @@ function buildTradeTooltip(
       </>
     );
   }
-  // Line features
   return (
     <>
       <strong>{props.name as string}</strong>
@@ -90,14 +62,23 @@ function buildTradeTooltip(
   );
 }
 
+// ── Worldview filter — one geometry per country ───────────────────────────
+// Undisputed countries have worldview 'all'; disputed areas have specific
+// worldview values (US, CN, IN, …). Show 'all' + 'US' to get one geometry
+// per country without duplicates.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], true, false];
+
 // ── Component ─────────────────────────────────────────────────────────────
 
 export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapProps) {
   const mapRef = useRef<MapRef>(null);
-  const hoveredIdRef = useRef<number | null>(null);
-  const prevSelectedRef = useRef<number | null>(null);
+  const hoveredIdRef = useRef<string | null>(null);
+  const prevSelectedRef = useRef<string | null>(null);
 
   const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
+  const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
+  const [activeMilitaryLayers, setActiveMilitaryLayers] = useState<Set<MilitaryFeatureCategory>>(new Set());
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
 
   const handleLayerToggle = useCallback((id: TradeLaneCategory) => {
@@ -108,29 +89,20 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
     });
   }, []);
 
-  // Country GeoJSON with numeric IDs and enriched properties for Mapbox expressions
-  const geoData = useMemo<FeatureCollection<Geometry>>(() => {
-    const topo = topology as unknown as Topology;
-    const raw = feature(topo, topo.objects.countries) as FeatureCollection<Geometry>;
-    return {
-      ...raw,
-      features: raw.features.map((f) => {
-        const idStr = String(f.id ?? '');
-        const country = getCountryByNumericCode(idStr);
-        const name = country?.name ?? (f.properties as { name?: string })?.name ?? 'Unknown';
-        const isSupported = supportedCountryCodes.has(idStr);
-        return {
-          ...f,
-          id: Number(f.id),
-          geometry: f.geometry ? fixAntimeridian(f.geometry) : f.geometry,
-          properties: {
-            ...f.properties,
-            supported: isSupported,
-            displayName: isSupported ? name : `${name} (coming soon)`,
-          },
-        };
-      }),
-    };
+  const handleNaturalLayerToggle = useCallback((id: NaturalFeatureCategory) => {
+    setActiveNaturalLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleMilitaryLayerToggle = useCallback((id: MilitaryFeatureCategory) => {
+    setActiveMilitaryLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }, []);
 
   // Sync Mapbox feature state when selectedCountry prop changes
@@ -140,19 +112,18 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
 
     if (prevSelectedRef.current !== null) {
       map.setFeatureState(
-        { source: 'countries', id: prevSelectedRef.current },
+        { source: 'countries', sourceLayer: 'country_boundaries', id: prevSelectedRef.current },
         { selected: false },
       );
     }
 
-    const newId = selectedCountry !== null ? Number(selectedCountry) : null;
-    if (newId !== null) {
+    if (selectedCountry !== null) {
       map.setFeatureState(
-        { source: 'countries', id: newId },
+        { source: 'countries', sourceLayer: 'country_boundaries', id: selectedCountry },
         { selected: true },
       );
     }
-    prevSelectedRef.current = newId;
+    prevSelectedRef.current = selectedCountry;
   }, [selectedCountry]);
 
   const onMouseMove = useCallback(
@@ -163,19 +134,21 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
       const features = e.features ?? [];
       const countryFeat = features.find((f) => f.layer?.id === 'countries-fill');
       const tradeFeat = features.find((f) => f.layer?.id && ALL_TRADE_LAYER_IDS.includes(f.layer.id));
+      const naturalFeat = features.find((f) => f.layer?.id && NATURAL_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
+      const militaryFeat = features.find((f) => f.layer?.id && MILITARY_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
 
       // Update country hover feature state
-      const newHoverId = countryFeat ? Number(countryFeat.id) : null;
+      const newHoverId = countryFeat ? String(countryFeat.id) : null;
       if (hoveredIdRef.current !== newHoverId) {
         if (hoveredIdRef.current !== null) {
           map.setFeatureState(
-            { source: 'countries', id: hoveredIdRef.current },
+            { source: 'countries', sourceLayer: 'country_boundaries', id: hoveredIdRef.current },
             { hovered: false },
           );
         }
         if (newHoverId !== null) {
           map.setFeatureState(
-            { source: 'countries', id: newHoverId },
+            { source: 'countries', sourceLayer: 'country_boundaries', id: newHoverId },
             { hovered: true },
           );
         }
@@ -184,9 +157,9 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
 
       // Cursor
       const canvas = map.getCanvas();
-      if (countryFeat && countryFeat.properties?.supported) {
+      if (countryFeat && supportedAlpha3Codes.has(String(countryFeat.id))) {
         canvas.style.cursor = 'pointer';
-      } else if (tradeFeat) {
+      } else if (tradeFeat || naturalFeat || militaryFeat) {
         canvas.style.cursor = 'default';
       } else {
         canvas.style.cursor = '';
@@ -194,10 +167,14 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
 
       // Tooltip
       if (countryFeat) {
+        const alpha3 = String(countryFeat.id);
+        const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
+        const isSupported = supportedAlpha3Codes.has(alpha3);
+        const displayName = isSupported ? name : `${name} (coming soon)`;
         setTooltip({
           x: e.point.x,
           y: e.point.y,
-          content: <span>{countryFeat.properties?.displayName}</span>,
+          content: <span>{displayName}</span>,
         });
       } else if (tradeFeat) {
         setTooltip({
@@ -206,6 +183,46 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
           content: buildTradeTooltip(
             tradeFeat.properties as Record<string, unknown>,
             tradeFeat.layer?.id ?? '',
+          ),
+        });
+      } else if (naturalFeat) {
+        const props = naturalFeat.properties as { name?: string; description?: string };
+        setTooltip({
+          x: e.point.x,
+          y: e.point.y,
+          content: (
+            <>
+              <strong>{props.name}</strong>
+              {props.description && (
+                <div className="tooltip-desc">{props.description}</div>
+              )}
+            </>
+          ),
+        });
+      } else if (militaryFeat) {
+        const props = militaryFeat.properties as {
+          name?: string;
+          nation?: string;
+          description?: string;
+          facilityType?: string;
+        };
+        const nationLabel = props.nation ? NATION_LABELS[props.nation as keyof typeof NATION_LABELS] ?? props.nation : '';
+        setTooltip({
+          x: e.point.x,
+          y: e.point.y,
+          content: (
+            <>
+              <strong>{props.name}</strong>
+              {props.facilityType && (
+                <div className="tooltip-stat" style={{ color: '#ff9800' }}>{props.facilityType}</div>
+              )}
+              {nationLabel && (
+                <div className="tooltip-stat">{nationLabel}</div>
+              )}
+              {props.description && (
+                <div className="tooltip-desc">{props.description}</div>
+              )}
+            </>
           ),
         });
       } else {
@@ -219,7 +236,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
     const map = mapRef.current;
     if (hoveredIdRef.current !== null && map) {
       map.setFeatureState(
-        { source: 'countries', id: hoveredIdRef.current },
+        { source: 'countries', sourceLayer: 'country_boundaries', id: hoveredIdRef.current },
         { hovered: false },
       );
       hoveredIdRef.current = null;
@@ -232,16 +249,18 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
     (e: MapMouseEvent) => {
       const features = e.features ?? [];
       const countryFeat = features.find((f) => f.layer?.id === 'countries-fill');
-      if (countryFeat && countryFeat.properties?.supported) {
-        const id = String(countryFeat.id);
-        onCountrySelect(id === selectedCountry ? null : id);
+      if (countryFeat) {
+        const alpha3 = String(countryFeat.id);
+        if (supportedAlpha3Codes.has(alpha3)) {
+          onCountrySelect(alpha3 === selectedCountry ? null : alpha3);
+        }
       }
     },
     [selectedCountry, onCountrySelect],
   );
 
   const interactiveLayerIds = useMemo(
-    () => ['countries-fill', ...ALL_TRADE_LAYER_IDS],
+    () => ['countries-fill', ...ALL_TRADE_LAYER_IDS, ...NATURAL_INTERACTIVE_LAYER_IDS, ...MILITARY_INTERACTIVE_LAYER_IDS],
     [],
   );
 
@@ -261,32 +280,39 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
         onMouseOut={onMouseLeave}
         onClick={onClick}
       >
-        {/* Country polygons */}
-        <Source id="countries" type="geojson" data={geoData} generateId={false}>
+        {/* Country polygons from Mapbox vector tileset — exact border alignment */}
+        <Source
+          id="countries"
+          type="vector"
+          url="mapbox://mapbox.country-boundaries-v1"
+          promoteId={{ country_boundaries: 'iso_3166_1_alpha_3' }}
+        >
           <Layer
             id="countries-fill"
             type="fill"
+            source-layer="country_boundaries"
+            filter={WORLDVIEW_FILTER}
             paint={{
               'fill-color': '#c8dff0',
               'fill-opacity': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false], 0,
                 ['boolean', ['feature-state', 'hovered'], false], 0.22,
-                ['==', ['get', 'supported'], true], 0.07,
-                0,
+                0.07,
               ],
             }}
           />
           <Layer
             id="countries-line"
             type="line"
+            source-layer="country_boundaries"
+            filter={WORLDVIEW_FILTER}
             paint={{
               'line-color': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false], 'rgba(60,60,60,0.9)',
                 ['boolean', ['feature-state', 'hovered'], false], 'rgba(60,60,60,0.45)',
-                ['==', ['get', 'supported'], true], 'rgba(0,0,0,0.18)',
-                'rgba(0,0,0,0.08)',
+                'rgba(0,0,0,0.18)',
               ],
               'line-width': [
                 'case',
@@ -299,6 +325,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
         </Source>
 
         <TradeLanesLayer activeLayers={activeLayers} />
+        <NaturalFeaturesLayer activeLayers={activeNaturalLayers} />
+        <MilitaryLayer activeLayers={activeMilitaryLayers} />
         <GeoLabels />
 
         <NavigationControl position="bottom-right" />
@@ -314,7 +342,14 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
         </div>
       )}
 
-      <LayerControl activeLayers={activeLayers} onToggle={handleLayerToggle} />
+      <LayerControl
+        activeLayers={activeLayers}
+        onToggle={handleLayerToggle}
+        activeNaturalLayers={activeNaturalLayers}
+        onNaturalToggle={handleNaturalLayerToggle}
+        activeMilitaryLayers={activeMilitaryLayers}
+        onMilitaryToggle={handleMilitaryLayerToggle}
+      />
     </div>
   );
 }
