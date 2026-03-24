@@ -998,6 +998,341 @@ body {
   letter-spacing: 0.05em;
 }
 
+/* ─── Simulation ────────────────────────────────── */
+
+/* Trigger button — bottom center */
+.sim-trigger {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  color: oklch(35% 0.05 260);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  pointer-events: all;
+  transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.sim-trigger:hover {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-lg);
+  color: oklch(25% 0.05 260);
+}
+
+/* Scenario picker backdrop + modal */
+.sim-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+
+.sim-picker-modal {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  width: min(860px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sim-picker-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sim-picker-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: oklch(27.8% 0.033 256.8);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sim-picker-desc {
+  font-size: 0.82rem;
+  color: oklch(50% 0.03 256);
+  margin: 0;
+}
+
+.sim-picker-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.sim-scenario-card {
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sim-scenario-card:hover {
+  background: var(--accent-dim);
+  border-color: rgba(59, 159, 217, 0.35);
+  box-shadow: var(--shadow-sm);
+}
+
+.sim-scenario-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.15rem;
+}
+
+.sim-scenario-type {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+}
+
+.sim-scenario-waves {
+  font-size: 0.65rem;
+  color: oklch(60% 0.02 256);
+  font-weight: 600;
+}
+
+.sim-scenario-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: oklch(22% 0.033 256.8);
+  line-height: 1.2;
+}
+
+.sim-scenario-subtitle {
+  font-size: 0.73rem;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.sim-scenario-desc {
+  font-size: 0.78rem;
+  color: oklch(45% 0.03 256);
+  line-height: 1.5;
+  margin: 0.25rem 0 0;
+}
+
+.sim-picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Legend — top right during simulation */
+.sim-legend {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1001;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  pointer-events: none;
+}
+
+.sim-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sim-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.sim-legend-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: oklch(35% 0.03 256);
+}
+
+/* Controls bar — bottom center during simulation */
+.sim-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  pointer-events: all;
+  white-space: nowrap;
+}
+
+.sim-controls-scenario {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1rem;
+  border-right: 1px solid var(--border);
+}
+
+.sim-controls-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sim-controls-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: oklch(27.8% 0.033 256.8);
+}
+
+.sim-controls-wave {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 1rem;
+  border-right: 1px solid var(--border);
+}
+
+.sim-wave-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: oklch(27.8% 0.033 256.8);
+}
+
+.sim-wave-timeframe {
+  font-size: 0.68rem;
+  color: oklch(55% 0.02 256);
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
+}
+
+.sim-wave-pips {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sim-wave-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.sim-wave-pip.active {
+  background: var(--accent);
+  transform: scale(1.2);
+}
+
+.sim-wave-pip:hover {
+  background: oklch(55% 0.1 215);
+}
+
+.sim-controls-nav {
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+
+.sim-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: oklch(45% 0.03 256);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.sim-nav-btn:hover:not(:disabled) {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.sim-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sim-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: oklch(55% 0.03 256);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.sim-close-btn:hover {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+
 /* ─── Responsive ────────────────────────────────── */
 @media (max-width: 768px) {
   :root {
