@@ -20,6 +20,8 @@ import { NATION_LABELS } from '../../data/militaryFeatures';
 interface WorldMapProps {
   selectedCountry: string | null; // alpha-3 ISO code
   onCountrySelect: (alpha3: string | null) => void;
+  compareCountry?: string | null;
+  onCompareSelect?: (alpha3: string | null) => void;
 }
 
 // ── Tooltip builder ───────────────────────────────────────────────────────
@@ -71,10 +73,16 @@ const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], tru
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapProps) {
+export default function WorldMap({ selectedCountry, onCountrySelect, compareCountry, onCompareSelect }: WorldMapProps) {
   const mapRef = useRef<MapRef>(null);
   const hoveredIdRef = useRef<string | null>(null);
   const prevSelectedRef = useRef<string | null>(null);
+  const prevComparedRef = useRef<string | null>(null);
+  // Refs so mouse callbacks always see current values without re-creating
+  const selectedCountryRef = useRef(selectedCountry);
+  const onCompareSelectRef = useRef(onCompareSelect);
+  selectedCountryRef.current = selectedCountry;
+  onCompareSelectRef.current = onCompareSelect;
 
   const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
   const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
@@ -126,6 +134,27 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
     prevSelectedRef.current = selectedCountry;
   }, [selectedCountry]);
 
+  // Sync compareCountry feature state
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (prevComparedRef.current !== null) {
+      map.setFeatureState(
+        { source: 'countries', sourceLayer: 'country_boundaries', id: prevComparedRef.current },
+        { compared: false },
+      );
+    }
+
+    if (compareCountry !== null && compareCountry !== undefined) {
+      map.setFeatureState(
+        { source: 'countries', sourceLayer: 'country_boundaries', id: compareCountry },
+        { compared: true },
+      );
+    }
+    prevComparedRef.current = compareCountry ?? null;
+  }, [compareCountry]);
+
   const onMouseMove = useCallback(
     (e: MapMouseEvent) => {
       const map = mapRef.current;
@@ -171,10 +200,19 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
         const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
         const isSupported = supportedAlpha3Codes.has(alpha3);
         const displayName = isSupported ? name : `${name} (coming soon)`;
+        const currentSelected = selectedCountryRef.current;
+        const showCompareHint = isSupported && currentSelected && alpha3 !== currentSelected;
         setTooltip({
           x: e.point.x,
           y: e.point.y,
-          content: <span>{displayName}</span>,
+          content: showCompareHint ? (
+            <>
+              <strong>{displayName}</strong>
+              <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)' }}>↔ Click to compare</div>
+            </>
+          ) : (
+            <span>{displayName}</span>
+          ),
         });
       } else if (tradeFeat) {
         setTooltip({
@@ -252,11 +290,21 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
       if (countryFeat) {
         const alpha3 = String(countryFeat.id);
         if (supportedAlpha3Codes.has(alpha3)) {
-          onCountrySelect(alpha3 === selectedCountry ? null : alpha3);
+          const current = selectedCountryRef.current;
+          if (!current) {
+            onCountrySelect(alpha3);
+          } else if (alpha3 === current) {
+            // Click primary again → deselect all
+            onCountrySelect(null);
+            onCompareSelectRef.current?.(null);
+          } else {
+            // Different country while one is selected → compare
+            onCompareSelectRef.current?.(alpha3);
+          }
         }
       }
     },
-    [selectedCountry, onCountrySelect],
+    [onCountrySelect],
   );
 
   const interactiveLayerIds = useMemo(
@@ -297,6 +345,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
               'fill-opacity': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false], 0,
+                ['boolean', ['feature-state', 'compared'], false], 0,
                 ['boolean', ['feature-state', 'hovered'], false], 0.22,
                 0.07,
               ],
@@ -310,13 +359,15 @@ export default function WorldMap({ selectedCountry, onCountrySelect }: WorldMapP
             paint={{
               'line-color': [
                 'case',
-                ['boolean', ['feature-state', 'selected'], false], 'rgba(60,60,60,0.9)',
+                ['boolean', ['feature-state', 'selected'], false], 'rgba(30,30,30,0.9)',
+                ['boolean', ['feature-state', 'compared'], false], 'rgba(204,85,0,0.85)',
                 ['boolean', ['feature-state', 'hovered'], false], 'rgba(60,60,60,0.45)',
                 'rgba(0,0,0,0.18)',
               ],
               'line-width': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false], 2,
+                ['boolean', ['feature-state', 'compared'], false], 2,
                 ['boolean', ['feature-state', 'hovered'], false], 1.2,
                 0.5,
               ],

@@ -1,11 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 import WorldMap from './components/Map/WorldMap';
 import InfoPanel from './components/Panel/InfoPanel';
+import RelationshipCard from './components/Panel/RelationshipCard';
 import { countriesData } from './data/countries';
 import { useLiveData } from './hooks/useCountryData';
 
 export default function App() {
   const [selectedCode, setSelectedCode] = useState<string | null>(null); // alpha-3
+  const [compareCode, setCompareCode] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const selectedCountry = useMemo(() => {
@@ -13,7 +15,13 @@ export default function App() {
     return countriesData[selectedCode] ?? null;
   }, [selectedCode]);
 
+  const compareCountry = useMemo(() => {
+    if (!compareCode) return null;
+    return countriesData[compareCode] ?? null;
+  }, [compareCode]);
+
   const { liveData, indicators, loading } = useLiveData(selectedCountry?.code ?? null);
+  const { liveData: compareLiveData } = useLiveData(compareCode);
 
   const suggestions = useMemo(() => {
     if (searchQuery.length < 2) return [];
@@ -26,11 +34,27 @@ export default function App() {
 
   const handleSearchSelect = useCallback((code: string) => {
     setSelectedCode(code);
+    setCompareCode(null);
     setSearchQuery('');
   }, []);
 
   const handleClose = useCallback(() => {
     setSelectedCode(null);
+    setCompareCode(null);
+  }, []);
+
+  const handleCloseCompare = useCallback(() => {
+    setCompareCode(null);
+  }, []);
+
+  const handleSwap = useCallback(() => {
+    const prev = selectedCode;
+    setSelectedCode(compareCode);
+    setCompareCode(prev);
+  }, [selectedCode, compareCode]);
+
+  const handleCompareSelect = useCallback((alpha3: string | null) => {
+    setCompareCode(alpha3);
   }, []);
 
   const panelOpen = !!selectedCountry;
@@ -42,6 +66,8 @@ export default function App() {
         <WorldMap
           selectedCountry={selectedCode}
           onCountrySelect={setSelectedCode}
+          compareCountry={compareCode}
+          onCompareSelect={handleCompareSelect}
         />
 
         {/* Floating UI layer — pointer-events disabled on wrapper, enabled per child */}
@@ -100,8 +126,17 @@ export default function App() {
           </div>
         </div>
 
-        {/* Country detail panel — slides in from left */}
-        {selectedCountry && (
+        {/* Relationship card takes priority over InfoPanel when compare is active */}
+        {selectedCountry && compareCountry ? (
+          <RelationshipCard
+            countryA={selectedCountry}
+            countryB={compareCountry}
+            flagA={liveData?.flag}
+            flagB={compareLiveData?.flag}
+            onClose={handleCloseCompare}
+            onSwap={handleSwap}
+          />
+        ) : selectedCountry ? (
           <InfoPanel
             country={selectedCountry}
             liveData={liveData}
@@ -109,7 +144,7 @@ export default function App() {
             loading={loading}
             onClose={handleClose}
           />
-        )}
+        ) : null}
       </main>
     </div>
   );
