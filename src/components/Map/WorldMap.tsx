@@ -10,18 +10,43 @@ import { supportedAlpha3Codes } from '../../data/countries';
 import TradeLanesLayer, { ALL_TRADE_LAYER_IDS } from './TradeLanesLayer';
 import NaturalFeaturesLayer, { NATURAL_INTERACTIVE_LAYER_IDS } from './NaturalFeaturesLayer';
 import MilitaryLayer, { MILITARY_INTERACTIVE_LAYER_IDS } from './MilitaryLayer';
+import ResourcesClimateLayer, { RESOURCE_INTERACTIVE_LAYER_IDS } from './ResourcesClimateLayer';
 import GeoLabels from './GeoLabels';
 import LayerControl from '../UI/LayerControl';
 import type { TradeLaneCategory } from '../../data/tradeLanes';
 import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
 import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 import { NATION_LABELS } from '../../data/militaryFeatures';
+import type { ActiveRole } from '../../data/allianceDrag';
+import type { ResourcesClimateCategory } from '../../data/resourcesClimate';
+import { MINERAL_LABELS, MINERAL_COLORS } from '../../data/resourcesClimate';
+
+const ROLE_COLORS: Record<string, string> = {
+  'aggressor':         '#dc2626',
+  'target':            '#d97706',
+  'defending':         '#1d4ed8',
+  'defending-allied':  '#60a5fa',
+  'aggressor-aligned': '#f97316',
+  'contested':         '#7c3aed',
+  'neutral':           '#94a3b8',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  'aggressor':         'Aggressor',
+  'target':            'Target',
+  'defending':         'Defending',
+  'defending-allied':  'Allied Support',
+  'aggressor-aligned': 'Aligned w/ Aggressor',
+  'contested':         'Contested',
+  'neutral':           'Neutral',
+};
 
 interface WorldMapProps {
   selectedCountry: string | null; // alpha-3 ISO code
   onCountrySelect: (alpha3: string | null) => void;
   compareCountry?: string | null;
   onCompareSelect?: (alpha3: string | null) => void;
+  simulationRoles?: Record<string, ActiveRole> | null;
 }
 
 // ── Tooltip builder ───────────────────────────────────────────────────────
@@ -65,28 +90,33 @@ function buildTradeTooltip(
 }
 
 // ── Worldview filter — one geometry per country ───────────────────────────
-// Undisputed countries have worldview 'all'; disputed areas have specific
-// worldview values (US, CN, IN, …). Show 'all' + 'US' to get one geometry
-// per country without duplicates.
+// Filter to worldview='all' only: every recognised country has exactly one
+// feature in this set, with no overlaps, no stacked duplicates from the US
+// worldview, and no ambiguous promoted IDs — guaranteeing interactivity for
+// every country polygon.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], true, false];
+const WORLDVIEW_FILTER: any = ['==', ['get', 'worldview'], 'all'];
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export default function WorldMap({ selectedCountry, onCountrySelect, compareCountry, onCompareSelect }: WorldMapProps) {
+export default function WorldMap({ selectedCountry, onCountrySelect, compareCountry, onCompareSelect, simulationRoles }: WorldMapProps) {
   const mapRef = useRef<MapRef>(null);
   const hoveredIdRef = useRef<string | null>(null);
   const prevSelectedRef = useRef<string | null>(null);
   const prevComparedRef = useRef<string | null>(null);
+  const simActiveCodesRef = useRef<Set<string>>(new Set());
   // Refs so mouse callbacks always see current values without re-creating
   const selectedCountryRef = useRef(selectedCountry);
   const onCompareSelectRef = useRef(onCompareSelect);
+  const simulationRolesRef = useRef(simulationRoles);
   selectedCountryRef.current = selectedCountry;
   onCompareSelectRef.current = onCompareSelect;
+  simulationRolesRef.current = simulationRoles;
 
   const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
   const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
   const [activeMilitaryLayers, setActiveMilitaryLayers] = useState<Set<MilitaryFeatureCategory>>(new Set());
+  const [activeResourcesLayers, setActiveResourcesLayers] = useState<Set<ResourcesClimateCategory>>(new Set());
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
 
   const handleLayerToggle = useCallback((id: TradeLaneCategory) => {
@@ -107,6 +137,14 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
   const handleMilitaryLayerToggle = useCallback((id: MilitaryFeatureCategory) => {
     setActiveMilitaryLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleResourcesLayerToggle = useCallback((id: ResourcesClimateCategory) => {
+    setActiveResourcesLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
@@ -155,6 +193,31 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
     prevComparedRef.current = compareCountry ?? null;
   }, [compareCountry]);
 
+  // Sync simulation feature states (conflictRole) when simulationRoles changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear previous simulation roles
+    simActiveCodesRef.current.forEach((code) => {
+      map.setFeatureState(
+        { source: 'countries', sourceLayer: 'country_boundaries', id: code },
+        { conflictRole: null },
+      );
+    });
+    simActiveCodesRef.current = new Set();
+
+    if (simulationRoles) {
+      Object.entries(simulationRoles).forEach(([code, entry]) => {
+        map.setFeatureState(
+          { source: 'countries', sourceLayer: 'country_boundaries', id: code },
+          { conflictRole: entry.role },
+        );
+        simActiveCodesRef.current.add(code);
+      });
+    }
+  }, [simulationRoles]);
+
   const onMouseMove = useCallback(
     (e: MapMouseEvent) => {
       const map = mapRef.current;
@@ -165,9 +228,20 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       const tradeFeat = features.find((f) => f.layer?.id && ALL_TRADE_LAYER_IDS.includes(f.layer.id));
       const naturalFeat = features.find((f) => f.layer?.id && NATURAL_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
       const militaryFeat = features.find((f) => f.layer?.id && MILITARY_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
+      const mineralFeat = features.find((f) => f.layer?.id && RESOURCE_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
+
+      // Resolve the alpha-3 code — promoteId should set it, but fall back to
+      // the raw property if the promoted ID is null/undefined.
+      const resolveAlpha3 = (feat: (typeof features)[0]) => {
+        const promoted = feat.id;
+        if (promoted != null && String(promoted) !== 'null' && String(promoted) !== 'undefined') {
+          return String(promoted);
+        }
+        return (feat.properties as Record<string, unknown>)?.iso_3166_1_alpha_3 as string | null ?? null;
+      };
 
       // Update country hover feature state
-      const newHoverId = countryFeat ? String(countryFeat.id) : null;
+      const newHoverId = countryFeat ? resolveAlpha3(countryFeat) : null;
       if (hoveredIdRef.current !== newHoverId) {
         if (hoveredIdRef.current !== null) {
           map.setFeatureState(
@@ -186,17 +260,77 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
       // Cursor
       const canvas = map.getCanvas();
-      if (countryFeat && supportedAlpha3Codes.has(String(countryFeat.id))) {
+      const simRoles = simulationRolesRef.current;
+      const simRole = newHoverId && simRoles ? simRoles[newHoverId] : null;
+
+      if (simRoles) {
+        // Simulation mode: pointer only on countries with a role
+        canvas.style.cursor = simRole ? 'pointer' : '';
+      } else if (countryFeat && newHoverId && supportedAlpha3Codes.has(newHoverId)) {
         canvas.style.cursor = 'pointer';
-      } else if (tradeFeat || naturalFeat || militaryFeat) {
+      } else if (tradeFeat || naturalFeat || militaryFeat || mineralFeat) {
         canvas.style.cursor = 'default';
       } else {
         canvas.style.cursor = '';
       }
 
-      // Tooltip
-      if (countryFeat) {
-        const alpha3 = String(countryFeat.id);
+      // Tooltip — mineral points take priority over country fill
+      if (mineralFeat) {
+        const props = mineralFeat.properties as {
+          name?: string;
+          mineralType?: string;
+          country?: string;
+          description?: string;
+          scale?: string;
+        };
+        const mineralLabel = props.mineralType
+          ? (MINERAL_LABELS[props.mineralType as keyof typeof MINERAL_LABELS] ?? props.mineralType)
+          : '';
+        const mineralColor = props.mineralType
+          ? (MINERAL_COLORS[props.mineralType as keyof typeof MINERAL_COLORS] ?? '#aaa')
+          : '#aaa';
+        setTooltip({
+          x: e.point.x,
+          y: e.point.y,
+          content: (
+            <>
+              <strong>{props.name}</strong>
+              {mineralLabel && (
+                <div className="tooltip-stat" style={{ color: mineralColor }}>{mineralLabel}</div>
+              )}
+              {props.country && (
+                <div className="tooltip-stat">{props.country}</div>
+              )}
+              {props.description && (
+                <div className="tooltip-desc">{props.description}</div>
+              )}
+            </>
+          ),
+        });
+      } else if (countryFeat && simRoles) {
+        // Simulation mode tooltip
+        const alpha3 = newHoverId ?? resolveAlpha3(countryFeat) ?? '';
+        const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
+        const entry = simRoles[alpha3];
+        if (entry) {
+          const color = ROLE_COLORS[entry.role] ?? '#888';
+          const label = ROLE_LABELS[entry.role] ?? entry.role;
+          setTooltip({
+            x: e.point.x,
+            y: e.point.y,
+            content: (
+              <>
+                <strong>{name}</strong>
+                <div className="tooltip-stat" style={{ color }}>{label}</div>
+                <div className="tooltip-desc">{entry.rationale}</div>
+              </>
+            ),
+          });
+        } else {
+          setTooltip(null);
+        }
+      } else if (countryFeat) {
+        const alpha3 = newHoverId ?? resolveAlpha3(countryFeat) ?? '';
         const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
         const isSupported = supportedAlpha3Codes.has(alpha3);
         const displayName = isSupported ? name : `${name} (coming soon)`;
@@ -285,10 +419,16 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
   const onClick = useCallback(
     (e: MapMouseEvent) => {
+      // Simulation mode: clicks are informational only (tooltip on hover), no panel
+      if (simulationRolesRef.current) return;
+
       const features = e.features ?? [];
       const countryFeat = features.find((f) => f.layer?.id === 'countries-fill');
       if (countryFeat) {
-        const alpha3 = String(countryFeat.id);
+        const promoted = countryFeat.id;
+        const alpha3 = (promoted != null && String(promoted) !== 'null' && String(promoted) !== 'undefined')
+          ? String(promoted)
+          : (countryFeat.properties as Record<string, unknown>)?.iso_3166_1_alpha_3 as string ?? '';
         if (supportedAlpha3Codes.has(alpha3)) {
           const current = selectedCountryRef.current;
           if (!current) {
@@ -308,7 +448,13 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   );
 
   const interactiveLayerIds = useMemo(
-    () => ['countries-fill', ...ALL_TRADE_LAYER_IDS, ...NATURAL_INTERACTIVE_LAYER_IDS, ...MILITARY_INTERACTIVE_LAYER_IDS],
+    () => [
+      'countries-fill',
+      ...ALL_TRADE_LAYER_IDS,
+      ...NATURAL_INTERACTIVE_LAYER_IDS,
+      ...MILITARY_INTERACTIVE_LAYER_IDS,
+      ...RESOURCE_INTERACTIVE_LAYER_IDS,
+    ],
     [],
   );
 
@@ -351,6 +497,27 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
               ],
             }}
           />
+          {/* Simulation fill — colored by conflictRole feature state; transparent when not in simulation */}
+          <Layer
+            id="countries-sim-fill"
+            type="fill"
+            source-layer="country_boundaries"
+            filter={WORLDVIEW_FILTER}
+            paint={{
+              'fill-color': [
+                'case',
+                ['==', ['feature-state', 'conflictRole'], 'aggressor'],         '#dc2626',
+                ['==', ['feature-state', 'conflictRole'], 'target'],            '#d97706',
+                ['==', ['feature-state', 'conflictRole'], 'defending'],         '#1d4ed8',
+                ['==', ['feature-state', 'conflictRole'], 'defending-allied'],  '#60a5fa',
+                ['==', ['feature-state', 'conflictRole'], 'aggressor-aligned'], '#f97316',
+                ['==', ['feature-state', 'conflictRole'], 'contested'],         '#7c3aed',
+                ['==', ['feature-state', 'conflictRole'], 'neutral'],           '#94a3b8',
+                'rgba(0,0,0,0)',
+              ],
+              'fill-opacity': 0.55,
+            }}
+          />
           <Layer
             id="countries-line"
             type="line"
@@ -378,6 +545,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         <TradeLanesLayer activeLayers={activeLayers} />
         <NaturalFeaturesLayer activeLayers={activeNaturalLayers} />
         <MilitaryLayer activeLayers={activeMilitaryLayers} />
+        <ResourcesClimateLayer activeLayers={activeResourcesLayers} />
         <GeoLabels />
 
         <NavigationControl position="bottom-right" />
@@ -400,6 +568,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         onNaturalToggle={handleNaturalLayerToggle}
         activeMilitaryLayers={activeMilitaryLayers}
         onMilitaryToggle={handleMilitaryLayerToggle}
+        activeResourcesLayers={activeResourcesLayers}
+        onResourcesToggle={handleResourcesLayerToggle}
       />
     </div>
   );

@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback } from 'react';
 import WorldMap from './components/Map/WorldMap';
 import InfoPanel from './components/Panel/InfoPanel';
 import RelationshipCard from './components/Panel/RelationshipCard';
+import AllianceDrag from './components/Simulation/AllianceDrag';
 import { countriesData } from './data/countries';
 import { useLiveData } from './hooks/useCountryData';
+import { SCENARIOS, getActiveRoles } from './data/allianceDrag';
 
 export default function App() {
   const [selectedCode, setSelectedCode] = useState<string | null>(null); // alpha-3
@@ -57,7 +59,31 @@ export default function App() {
     setCompareCode(alpha3);
   }, []);
 
-  const panelOpen = !!selectedCountry;
+  // ── Simulation state ────────────────────────────────────────────────────
+  const [simScenarioId, setSimScenarioId] = useState<string | null>(null);
+  const [simStep, setSimStep] = useState(0);
+
+  const simulationRoles = useMemo(() => {
+    if (!simScenarioId) return null;
+    const scenario = SCENARIOS.find((s) => s.id === simScenarioId);
+    if (!scenario) return null;
+    return getActiveRoles(scenario, simStep);
+  }, [simScenarioId, simStep]);
+
+  const handleSimScenarioSelect = useCallback((id: string) => {
+    setSimScenarioId(id);
+    setSimStep(0);
+    // Clear any active country selection when entering simulation
+    setSelectedCode(null);
+    setCompareCode(null);
+  }, []);
+
+  const handleSimClose = useCallback(() => {
+    setSimScenarioId(null);
+    setSimStep(0);
+  }, []);
+
+  const panelOpen = !!selectedCountry && !simScenarioId;
 
   return (
     <div className="app">
@@ -68,6 +94,7 @@ export default function App() {
           onCountrySelect={setSelectedCode}
           compareCountry={compareCode}
           onCompareSelect={handleCompareSelect}
+          simulationRoles={simulationRoles}
         />
 
         {/* Floating UI layer — pointer-events disabled on wrapper, enabled per child */}
@@ -126,25 +153,36 @@ export default function App() {
           </div>
         </div>
 
-        {/* Relationship card takes priority over InfoPanel when compare is active */}
-        {selectedCountry && compareCountry ? (
-          <RelationshipCard
-            countryA={selectedCountry}
-            countryB={compareCountry}
-            flagA={liveData?.flag}
-            flagB={compareLiveData?.flag}
-            onClose={handleCloseCompare}
-            onSwap={handleSwap}
-          />
-        ) : selectedCountry ? (
-          <InfoPanel
-            country={selectedCountry}
-            liveData={liveData}
-            indicators={indicators}
-            loading={loading}
-            onClose={handleClose}
-          />
-        ) : null}
+        {/* Country panels — hidden during simulation */}
+        {!simScenarioId && (
+          selectedCountry && compareCountry ? (
+            <RelationshipCard
+              countryA={selectedCountry}
+              countryB={compareCountry}
+              flagA={liveData?.flag}
+              flagB={compareLiveData?.flag}
+              onClose={handleCloseCompare}
+              onSwap={handleSwap}
+            />
+          ) : selectedCountry ? (
+            <InfoPanel
+              country={selectedCountry}
+              liveData={liveData}
+              indicators={indicators}
+              loading={loading}
+              onClose={handleClose}
+            />
+          ) : null
+        )}
+
+        {/* Alliance Drag simulation — trigger button + picker + controls */}
+        <AllianceDrag
+          scenarioId={simScenarioId}
+          step={simStep}
+          onScenarioSelect={handleSimScenarioSelect}
+          onStepChange={setSimStep}
+          onClose={handleSimClose}
+        />
       </main>
     </div>
   );
