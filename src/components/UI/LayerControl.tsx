@@ -5,6 +5,8 @@ import { NATURAL_LAYER_DEFS } from '../../data/naturalFeatures';
 import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
 import { MILITARY_LAYER_DEFS } from '../../data/militaryFeatures';
 import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
+import { RC_LAYER_DEFS } from '../../data/resourcesClimate';
+import type { ResourcesClimateCategory } from '../../data/resourcesClimate';
 
 interface LayerControlProps {
   activeLayers: Set<TradeLaneCategory>;
@@ -13,6 +15,8 @@ interface LayerControlProps {
   onNaturalToggle: (id: NaturalFeatureCategory) => void;
   activeMilitaryLayers: Set<MilitaryFeatureCategory>;
   onMilitaryToggle: (id: MilitaryFeatureCategory) => void;
+  activeResourcesLayers: Set<ResourcesClimateCategory>;
+  onResourcesToggle: (id: ResourcesClimateCategory) => void;
 }
 
 // Build fast id → def lookups
@@ -41,6 +45,8 @@ export default function LayerControl({
   onNaturalToggle,
   activeMilitaryLayers,
   onMilitaryToggle,
+  activeResourcesLayers,
+  onResourcesToggle,
 }: LayerControlProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -145,6 +151,40 @@ export default function LayerControl({
                     <button
                       className={`layer-toggle ${active ? 'active' : ''}`}
                       onClick={() => onNaturalToggle(def.id)}
+                      title={def.description}
+                    >
+                      <span
+                        className="layer-swatch"
+                        style={{
+                          background: active ? def.color : 'transparent',
+                          borderColor: def.color,
+                        }}
+                      />
+                      <span className="layer-label">{def.label}</span>
+                      <span
+                        className={`badge badge-xs font-bold ${active ? '' : 'opacity-40'}`}
+                        style={active ? { backgroundColor: def.color, borderColor: def.color, color: '#fff' } : { borderColor: 'currentColor' }}
+                      >
+                        {active ? 'ON' : 'OFF'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+
+          {/* Resources & Climate group */}
+          <li className="layer-group">
+            <span className="layer-group-label">Resources &amp; Climate</span>
+            <ul className="layer-group-items">
+              {RC_LAYER_DEFS.map((def) => {
+                const active = activeResourcesLayers.has(def.id);
+                return (
+                  <li key={def.id}>
+                    <button
+                      className={`layer-toggle ${active ? 'active' : ''}`}
+                      onClick={() => onResourcesToggle(def.id)}
                       title={def.description}
                     >
                       <span
