@@ -59,7 +59,11 @@ export default function App() {
     setCompareCode(alpha3);
   }, []);
 
+  // ── Historical mode state ────────────────────────────────────────────────
+  const [historicalYear, setHistoricalYear] = useState<number | null>(null);
+
   // ── Simulation state ────────────────────────────────────────────────────
+  const [simPicking, setSimPicking] = useState(false);
   const [simScenarioId, setSimScenarioId] = useState<string | null>(null);
   const [simStep, setSimStep] = useState(0);
 
@@ -95,6 +99,9 @@ export default function App() {
           compareCountry={compareCode}
           onCompareSelect={handleCompareSelect}
           simulationRoles={simulationRoles}
+          historicalYear={historicalYear}
+          onHistoricalYearChange={setHistoricalYear}
+          onSimulate={() => setSimPicking(true)}
         />
 
         {/* Floating UI layer — pointer-events disabled on wrapper, enabled per child */}
@@ -175,13 +182,15 @@ export default function App() {
           ) : null
         )}
 
-        {/* Alliance Drag simulation — trigger button + picker + controls */}
+        {/* Alliance Drag simulation — picker + controls (trigger chip lives in WorldMap chips bar) */}
         <AllianceDrag
           scenarioId={simScenarioId}
           step={simStep}
           onScenarioSelect={handleSimScenarioSelect}
           onStepChange={setSimStep}
           onClose={handleSimClose}
+          picking={simPicking}
+          onPickingChange={setSimPicking}
         />
       </main>
     </div>

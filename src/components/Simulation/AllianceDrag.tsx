@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { SCENARIOS, type ConflictRole } from '../../data/allianceDrag';
 
 interface AllianceDragProps {
@@ -7,6 +6,8 @@ interface AllianceDragProps {
   onScenarioSelect: (id: string) => void;
   onStepChange: (step: number) => void;
   onClose: () => void;
+  picking: boolean;
+  onPickingChange: (v: boolean) => void;
 }
 
 const ROLE_META: Record<ConflictRole, { label: string; color: string }> = {
@@ -31,29 +32,17 @@ export default function AllianceDrag({
   onScenarioSelect,
   onStepChange,
   onClose,
+  picking,
+  onPickingChange,
 }: AllianceDragProps) {
-  const [picking, setPicking] = useState(false);
-
   const scenario = SCENARIOS.find((s) => s.id === scenarioId) ?? null;
   const maxStep = scenario ? scenario.waves.length - 1 : 0;
   const currentWave = scenario?.waves[step];
 
-  // ── Trigger button (no active simulation) ────────────────────────────────
-  if (!scenarioId && !picking) {
-    return (
-      <button className="sim-trigger" onClick={() => setPicking(true)}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-        Simulate
-      </button>
-    );
-  }
-
   // ── Scenario picker ───────────────────────────────────────────────────────
   if (!scenarioId && picking) {
     return (
-      <div className="sim-picker-backdrop" onClick={() => setPicking(false)}>
+      <div className="sim-picker-backdrop" onClick={() => onPickingChange(false)}>
         <div className="sim-picker-modal" onClick={(e) => e.stopPropagation()}>
           <div className="sim-picker-header">
             <div className="sim-picker-title">
@@ -74,7 +63,7 @@ export default function AllianceDrag({
                 className="sim-scenario-card"
                 onClick={() => {
                   onScenarioSelect(s.id);
-                  setPicking(false);
+                  onPickingChange(false);
                 }}
               >
                 <div className="sim-scenario-top">
@@ -91,7 +80,7 @@ export default function AllianceDrag({
           </div>
 
           <div className="sim-picker-footer">
-            <button className="btn btn-ghost btn-sm" onClick={() => setPicking(false)}>
+            <button className="btn btn-ghost btn-sm" onClick={() => onPickingChange(false)}>
               Cancel
             </button>
           </div>
@@ -99,6 +88,9 @@ export default function AllianceDrag({
       </div>
     );
   }
+
+  // ── No simulation active and not picking — render nothing ─────────────────
+  if (!scenarioId) return null;
 
   // ── Active simulation controls ────────────────────────────────────────────
   return (
