@@ -6,13 +6,15 @@ import Map, {
   type MapMouseEvent,
 } from 'react-map-gl/mapbox';
 import { useMemo, useCallback, useState, useRef, useEffect, type ReactNode } from 'react';
-import { supportedAlpha3Codes } from '../../data/countries';
 import TradeLanesLayer, { ALL_TRADE_LAYER_IDS } from './TradeLanesLayer';
 import NaturalFeaturesLayer, { NATURAL_INTERACTIVE_LAYER_IDS } from './NaturalFeaturesLayer';
 import MilitaryLayer, { MILITARY_INTERACTIVE_LAYER_IDS } from './MilitaryLayer';
 import ResourcesClimateLayer, { RESOURCE_INTERACTIVE_LAYER_IDS } from './ResourcesClimateLayer';
 import GeoLabels from './GeoLabels';
 import LayerControl from '../UI/LayerControl';
+import HistoricalBordersLayer, { HISTORICAL_FILL_ID } from './HistoricalBordersLayer';
+import TimeSlider from '../UI/TimeSlider';
+import { HISTORICAL_SNAPSHOTS } from '../../data/historicalBorders';
 import type { TradeLaneCategory } from '../../data/tradeLanes';
 import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
 import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
@@ -47,6 +49,9 @@ interface WorldMapProps {
   compareCountry?: string | null;
   onCompareSelect?: (alpha3: string | null) => void;
   simulationRoles?: Record<string, ActiveRole> | null;
+  historicalYear?: number | null;
+  onHistoricalYearChange?: (year: number | null) => void;
+  onSimulate?: () => void;
 }
 
 // ── Tooltip builder ───────────────────────────────────────────────────────
@@ -89,17 +94,23 @@ function buildTradeTooltip(
   );
 }
 
-// ── Worldview filter — one geometry per country ───────────────────────────
-// Filter to worldview='all' only: every recognised country has exactly one
-// feature in this set, with no overlaps, no stacked duplicates from the US
-// worldview, and no ambiguous promoted IDs — guaranteeing interactivity for
-// every country polygon.
+// ── Worldview filter ──────────────────────────────────────────────────────
+// Include both 'all' (undisputed borders) and 'US' (US-recognised borders for
+// disputed territories). This is Mapbox's recommended pattern and ensures
+// countries like Russia and China — whose polygons only exist under 'US', not
+// 'all' — are included and interactive. Countries that appear in both worldviews
+// share the same promoteId (iso_3166_1_alpha_3), so feature-state is applied to
+// all matching features consistently and `find()` in event handlers returns one.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WORLDVIEW_FILTER: any = ['==', ['get', 'worldview'], 'all'];
+const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], true, false];
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-export default function WorldMap({ selectedCountry, onCountrySelect, compareCountry, onCompareSelect, simulationRoles }: WorldMapProps) {
+export default function WorldMap({ selectedCountry, onCountrySelect, compareCountry, onCompareSelect, simulationRoles, historicalYear = null, onHistoricalYearChange, onSimulate }: WorldMapProps) {
+  const historicalSnapshot = useMemo(
+    () => (historicalYear !== null ? HISTORICAL_SNAPSHOTS.find((s) => s.year === historicalYear) ?? null : null),
+    [historicalYear],
+  );
   const mapRef = useRef<MapRef>(null);
   const hoveredIdRef = useRef<string | null>(null);
   const prevSelectedRef = useRef<string | null>(null);
@@ -113,6 +124,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   onCompareSelectRef.current = onCompareSelect;
   simulationRolesRef.current = simulationRoles;
 
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
   const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
   const [activeMilitaryLayers, setActiveMilitaryLayers] = useState<Set<MilitaryFeatureCategory>>(new Set());
@@ -229,6 +242,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       const naturalFeat = features.find((f) => f.layer?.id && NATURAL_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
       const militaryFeat = features.find((f) => f.layer?.id && MILITARY_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
       const mineralFeat = features.find((f) => f.layer?.id && RESOURCE_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
+      const empireFeat = features.find((f) => f.layer?.id === HISTORICAL_FILL_ID);
 
       // Resolve the alpha-3 code — promoteId should set it, but fall back to
       // the raw property if the promoted ID is null/undefined.
@@ -266,16 +280,27 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       if (simRoles) {
         // Simulation mode: pointer only on countries with a role
         canvas.style.cursor = simRole ? 'pointer' : '';
-      } else if (countryFeat && newHoverId && supportedAlpha3Codes.has(newHoverId)) {
+      } else if (countryFeat && newHoverId) {
         canvas.style.cursor = 'pointer';
+      } else if (empireFeat) {
+        canvas.style.cursor = 'default';
       } else if (tradeFeat || naturalFeat || militaryFeat || mineralFeat) {
         canvas.style.cursor = 'default';
       } else {
         canvas.style.cursor = '';
       }
 
-      // Tooltip — mineral points take priority over country fill
-      if (mineralFeat) {
+      // Tooltip — empire takes priority in historical mode
+      if (empireFeat) {
+        const props = empireFeat.properties as { name?: string; color?: string };
+        setTooltip({
+          x: e.point.x,
+          y: e.point.y,
+          content: (
+            <strong style={{ color: props.color }}>{props.name}</strong>
+          ),
+        });
+      } else if (mineralFeat) {
         const props = mineralFeat.properties as {
           name?: string;
           mineralType?: string;
@@ -332,20 +357,18 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       } else if (countryFeat) {
         const alpha3 = newHoverId ?? resolveAlpha3(countryFeat) ?? '';
         const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
-        const isSupported = supportedAlpha3Codes.has(alpha3);
-        const displayName = isSupported ? name : `${name} (coming soon)`;
         const currentSelected = selectedCountryRef.current;
-        const showCompareHint = isSupported && currentSelected && alpha3 !== currentSelected;
+        const showCompareHint = currentSelected && alpha3 !== currentSelected;
         setTooltip({
           x: e.point.x,
           y: e.point.y,
           content: showCompareHint ? (
             <>
-              <strong>{displayName}</strong>
+              <strong>{name}</strong>
               <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)' }}>↔ Click to compare</div>
             </>
           ) : (
-            <span>{displayName}</span>
+            <span>{name}</span>
           ),
         });
       } else if (tradeFeat) {
@@ -419,8 +442,9 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
   const onClick = useCallback(
     (e: MapMouseEvent) => {
-      // Simulation mode: clicks are informational only (tooltip on hover), no panel
+      // Simulation or historical mode: no country panel interaction
       if (simulationRolesRef.current) return;
+      if (historicalYear !== null) return;
 
       const features = e.features ?? [];
       const countryFeat = features.find((f) => f.layer?.id === 'countries-fill');
@@ -429,7 +453,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         const alpha3 = (promoted != null && String(promoted) !== 'null' && String(promoted) !== 'undefined')
           ? String(promoted)
           : (countryFeat.properties as Record<string, unknown>)?.iso_3166_1_alpha_3 as string ?? '';
-        if (supportedAlpha3Codes.has(alpha3)) {
+        if (alpha3) {
           const current = selectedCountryRef.current;
           if (!current) {
             onCountrySelect(alpha3);
@@ -444,12 +468,13 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         }
       }
     },
-    [onCountrySelect],
+    [onCountrySelect, historicalYear],
   );
 
   const interactiveLayerIds = useMemo(
     () => [
       'countries-fill',
+      HISTORICAL_FILL_ID,
       ...ALL_TRADE_LAYER_IDS,
       ...NATURAL_INTERACTIVE_LAYER_IDS,
       ...MILITARY_INTERACTIVE_LAYER_IDS,
@@ -474,6 +499,9 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         onMouseOut={onMouseLeave}
         onClick={onClick}
       >
+        {/* Historical empire layer — rendered below country outlines */}
+        {historicalSnapshot && <HistoricalBordersLayer snapshot={historicalSnapshot} />}
+
         {/* Country polygons from Mapbox vector tileset — exact border alignment */}
         <Source
           id="countries"
@@ -488,7 +516,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
             filter={WORLDVIEW_FILTER}
             paint={{
               'fill-color': '#c8dff0',
-              'fill-opacity': [
+              'fill-opacity': historicalYear !== null ? 0 : [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false], 0,
                 ['boolean', ['feature-state', 'compared'], false], 0,
@@ -561,16 +589,69 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         </div>
       )}
 
-      <LayerControl
-        activeLayers={activeLayers}
-        onToggle={handleLayerToggle}
-        activeNaturalLayers={activeNaturalLayers}
-        onNaturalToggle={handleNaturalLayerToggle}
-        activeMilitaryLayers={activeMilitaryLayers}
-        onMilitaryToggle={handleMilitaryLayerToggle}
-        activeResourcesLayers={activeResourcesLayers}
-        onResourcesToggle={handleResourcesLayerToggle}
-      />
+      {/* Layer panel — floats above the chips bar */}
+      {layerPanelOpen && (
+        <LayerControl
+          activeLayers={activeLayers}
+          onToggle={handleLayerToggle}
+          activeNaturalLayers={activeNaturalLayers}
+          onNaturalToggle={handleNaturalLayerToggle}
+          activeMilitaryLayers={activeMilitaryLayers}
+          onMilitaryToggle={handleMilitaryLayerToggle}
+          activeResourcesLayers={activeResourcesLayers}
+          onResourcesToggle={handleResourcesLayerToggle}
+        />
+      )}
+
+      {/* Timeline panel */}
+      {timelineOpen && (
+        <TimeSlider
+          selectedYear={historicalYear}
+          onChange={onHistoricalYearChange ?? (() => {})}
+          onClose={() => setTimelineOpen(false)}
+        />
+      )}
+
+      {/* Unified chips bar — bottom-left */}
+      {!timelineOpen && (
+        <div className="map-chips-bar">
+          <button
+            className={`map-chip${layerPanelOpen ? ' active' : ''}`}
+            onClick={() => setLayerPanelOpen((v) => !v)}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+            Data Layers
+          </button>
+
+          {!simulationRoles && (
+            <button className="map-chip" onClick={onSimulate}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              Simulate
+            </button>
+          )}
+
+          <button
+            className={`map-chip${historicalYear !== null ? ' active' : ''}`}
+            onClick={() => setTimelineOpen(true)}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Timeline
+            {historicalYear !== null && (() => {
+              const snap = HISTORICAL_SNAPSHOTS.find((s) => s.year === historicalYear);
+              return snap ? <span className="map-chip-badge">{snap.label}</span> : null;
+            })()}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
