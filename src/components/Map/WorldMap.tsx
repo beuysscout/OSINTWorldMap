@@ -6,7 +6,6 @@ import Map, {
   type MapMouseEvent,
 } from 'react-map-gl/mapbox';
 import { useMemo, useCallback, useState, useRef, useEffect, type ReactNode } from 'react';
-import { supportedAlpha3Codes } from '../../data/countries';
 import TradeLanesLayer, { ALL_TRADE_LAYER_IDS } from './TradeLanesLayer';
 import NaturalFeaturesLayer, { NATURAL_INTERACTIVE_LAYER_IDS } from './NaturalFeaturesLayer';
 import MilitaryLayer, { MILITARY_INTERACTIVE_LAYER_IDS } from './MilitaryLayer';
@@ -95,13 +94,15 @@ function buildTradeTooltip(
   );
 }
 
-// ── Worldview filter — one geometry per country ───────────────────────────
-// Filter to worldview='all' only: every recognised country has exactly one
-// feature in this set, with no overlaps, no stacked duplicates from the US
-// worldview, and no ambiguous promoted IDs — guaranteeing interactivity for
-// every country polygon.
+// ── Worldview filter ──────────────────────────────────────────────────────
+// Include both 'all' (undisputed borders) and 'US' (US-recognised borders for
+// disputed territories). This is Mapbox's recommended pattern and ensures
+// countries like Russia and China — whose polygons only exist under 'US', not
+// 'all' — are included and interactive. Countries that appear in both worldviews
+// share the same promoteId (iso_3166_1_alpha_3), so feature-state is applied to
+// all matching features consistently and `find()` in event handlers returns one.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WORLDVIEW_FILTER: any = ['==', ['get', 'worldview'], 'all'];
+const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], true, false];
 
 // ── Component ─────────────────────────────────────────────────────────────
 
@@ -279,7 +280,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       if (simRoles) {
         // Simulation mode: pointer only on countries with a role
         canvas.style.cursor = simRole ? 'pointer' : '';
-      } else if (countryFeat && newHoverId && supportedAlpha3Codes.has(newHoverId)) {
+      } else if (countryFeat && newHoverId) {
         canvas.style.cursor = 'pointer';
       } else if (empireFeat) {
         canvas.style.cursor = 'default';
@@ -356,20 +357,18 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       } else if (countryFeat) {
         const alpha3 = newHoverId ?? resolveAlpha3(countryFeat) ?? '';
         const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
-        const isSupported = supportedAlpha3Codes.has(alpha3);
-        const displayName = isSupported ? name : `${name} (coming soon)`;
         const currentSelected = selectedCountryRef.current;
-        const showCompareHint = isSupported && currentSelected && alpha3 !== currentSelected;
+        const showCompareHint = currentSelected && alpha3 !== currentSelected;
         setTooltip({
           x: e.point.x,
           y: e.point.y,
           content: showCompareHint ? (
             <>
-              <strong>{displayName}</strong>
+              <strong>{name}</strong>
               <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)' }}>↔ Click to compare</div>
             </>
           ) : (
-            <span>{displayName}</span>
+            <span>{name}</span>
           ),
         });
       } else if (tradeFeat) {
@@ -454,7 +453,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         const alpha3 = (promoted != null && String(promoted) !== 'null' && String(promoted) !== 'undefined')
           ? String(promoted)
           : (countryFeat.properties as Record<string, unknown>)?.iso_3166_1_alpha_3 as string ?? '';
-        if (supportedAlpha3Codes.has(alpha3)) {
+        if (alpha3) {
           const current = selectedCountryRef.current;
           if (!current) {
             onCountrySelect(alpha3);
