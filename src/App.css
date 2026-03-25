@@ -99,6 +99,13 @@ body {
   border-radius: 14px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.search-card--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .brand-mark {

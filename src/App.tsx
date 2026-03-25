@@ -107,8 +107,8 @@ export default function App() {
         {/* Floating UI layer — pointer-events disabled on wrapper, enabled per child */}
         <div className="map-ui">
           <div className="search-overlay">
-            {/* Brand + search card */}
-            <div className="search-card">
+            {/* Brand + search card — hidden when side drawer is open */}
+            <div className={`search-card${panelOpen ? ' search-card--hidden' : ''}`}>
               <div className="brand-mark">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
