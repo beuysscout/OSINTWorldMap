@@ -579,6 +579,9 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         <NavigationControl position="bottom-right" />
       </Map>
 
+      {/* Overlay — sits above Mapbox canvas; pointer-events: none so map stays interactive */}
+      <div className="map-overlay">
+
       {/* Floating tooltip */}
       {tooltip && (
         <div
@@ -652,6 +655,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
           </button>
         </div>
       )}
+
+      </div>{/* end .map-overlay */}
     </div>
   );
 }
