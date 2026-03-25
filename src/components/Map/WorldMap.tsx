@@ -457,6 +457,23 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
           const current = selectedCountryRef.current;
           if (!current) {
             onCountrySelect(alpha3);
+            // Center map on the selected country
+            const geom = countryFeat.geometry;
+            if (geom && mapRef.current) {
+              const coords: number[][] = geom.type === 'Polygon'
+                ? (geom as GeoJSON.Polygon).coordinates.flat()
+                : geom.type === 'MultiPolygon'
+                  ? (geom as GeoJSON.MultiPolygon).coordinates.flat(2)
+                  : [];
+              if (coords.length) {
+                const lngs = coords.map((c) => c[0]);
+                const lats = coords.map((c) => c[1]);
+                mapRef.current.fitBounds(
+                  [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+                  { padding: 80, maxZoom: 6, duration: 800 },
+                );
+              }
+            }
           } else if (alpha3 === current) {
             // Click primary again → deselect all
             onCountrySelect(null);
