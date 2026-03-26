@@ -22,6 +22,8 @@ import { NATION_LABELS } from '../../data/militaryFeatures';
 import type { ActiveRole } from '../../data/allianceDrag';
 import type { ResourcesClimateCategory } from '../../data/resourcesClimate';
 import { MINERAL_LABELS, MINERAL_COLORS } from '../../data/resourcesClimate';
+import PowerAlliancesLayer from './PowerAlliancesLayer';
+import type { PowerAllianceCategory } from '../../data/powerAlliances';
 
 const ROLE_COLORS: Record<string, string> = {
   'aggressor':         '#dc2626',
@@ -130,6 +132,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
   const [activeMilitaryLayers, setActiveMilitaryLayers] = useState<Set<MilitaryFeatureCategory>>(new Set());
   const [activeResourcesLayers, setActiveResourcesLayers] = useState<Set<ResourcesClimateCategory>>(new Set());
+  const [activePowerAllianceLayers, setActivePowerAllianceLayers] = useState<Set<PowerAllianceCategory>>(new Set());
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
 
   const handleLayerToggle = useCallback((id: TradeLaneCategory) => {
@@ -158,6 +161,14 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
   const handleResourcesLayerToggle = useCallback((id: ResourcesClimateCategory) => {
     setActiveResourcesLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handlePowerAllianceToggle = useCallback((id: PowerAllianceCategory) => {
+    setActivePowerAllianceLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
@@ -587,6 +598,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
           />
         </Source>
 
+        <PowerAlliancesLayer activeLayers={activePowerAllianceLayers} />
         <TradeLanesLayer activeLayers={activeLayers} />
         <NaturalFeaturesLayer activeLayers={activeNaturalLayers} />
         <MilitaryLayer activeLayers={activeMilitaryLayers} />
@@ -620,6 +632,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
           onMilitaryToggle={handleMilitaryLayerToggle}
           activeResourcesLayers={activeResourcesLayers}
           onResourcesToggle={handleResourcesLayerToggle}
+          activePowerAllianceLayers={activePowerAllianceLayers}
+          onPowerAllianceToggle={handlePowerAllianceToggle}
         />
       )}
 
