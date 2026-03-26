@@ -6,6 +6,8 @@ import { MILITARY_LAYER_DEFS } from '../../data/militaryFeatures';
 import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 import { RC_LAYER_DEFS } from '../../data/resourcesClimate';
 import type { ResourcesClimateCategory } from '../../data/resourcesClimate';
+import { POWER_ALLIANCE_LAYER_DEFS } from '../../data/powerAlliances';
+import type { PowerAllianceCategory, PowerAllianceGroup } from '../../data/powerAlliances';
 
 interface LayerControlProps {
   activeLayers: Set<TradeLaneCategory>;
@@ -16,11 +18,21 @@ interface LayerControlProps {
   onMilitaryToggle: (id: MilitaryFeatureCategory) => void;
   activeResourcesLayers: Set<ResourcesClimateCategory>;
   onResourcesToggle: (id: ResourcesClimateCategory) => void;
+  activePowerAllianceLayers: Set<PowerAllianceCategory>;
+  onPowerAllianceToggle: (id: PowerAllianceCategory) => void;
 }
 
 // Build fast id → def lookups
 const LAYER_DEF_MAP = Object.fromEntries(LAYER_DEFS.map((d) => [d.id, d]));
 const NATURAL_LAYER_DEF_MAP = Object.fromEntries(NATURAL_LAYER_DEFS.map((d) => [d.id, d]));
+const POWER_ALLIANCE_DEF_MAP = Object.fromEntries(POWER_ALLIANCE_LAYER_DEFS.map((d) => [d.id, d]));
+
+const DIPLOMATIC_GROUPS: { label: string; ids: PowerAllianceCategory[] }[] = [
+  { label: 'Formal Alliances', ids: ['nato', 'csto', 'sco', 'aukus', 'quad'] },
+  { label: 'Spheres of Influence', ids: ['sphereUS', 'sphereChina', 'sphereRussia'] },
+  { label: 'UN Voting Blocs', ids: ['unWestern', 'unRussiaChinaBloc'] },
+  { label: 'Sanctions', ids: ['sanctionsUS', 'sanctionsEU'] },
+];
 
 const LAYER_GROUPS: { label: string; ids: TradeLaneCategory[] }[] = [
   {
@@ -80,10 +92,37 @@ export default function LayerControl({
   onMilitaryToggle,
   activeResourcesLayers,
   onResourcesToggle,
+  activePowerAllianceLayers,
+  onPowerAllianceToggle,
 }: LayerControlProps) {
   return (
     <div className="layer-control">
       <ul className="layer-control-list">
+
+        {/* ── Diplomatic Relationships ─────────────────────────────────────── */}
+        {DIPLOMATIC_GROUPS.map((group) => (
+          <li key={group.label} className="layer-group">
+            <span className="layer-group-label">{group.label}</span>
+            <ul className="layer-group-items">
+              {group.ids.map((id) => {
+                const def = POWER_ALLIANCE_DEF_MAP[id];
+                return (
+                  <li key={id}>
+                    <LayerBtn
+                      active={activePowerAllianceLayers.has(id)}
+                      color={def.color}
+                      label={def.label}
+                      description={def.description}
+                      onToggle={() => onPowerAllianceToggle(id)}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+        ))}
+
+        {/* ── Trade & Infrastructure ────────────────────────────────────────── */}
         {LAYER_GROUPS.map((group) => (
           <li key={group.label} className="layer-group">
             <span className="layer-group-label">{group.label}</span>
