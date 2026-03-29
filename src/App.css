@@ -185,7 +185,7 @@ body {
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
   border-radius: 14px;
-  min-width: 200px;
+  min-width: 280px;
   max-height: calc(100vh - 220px);
   overflow-y: auto;
   box-shadow: var(--shadow-md);
@@ -275,6 +275,161 @@ body {
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ─── Layer Control: Tabs ────────────────────────── */
+.layer-control-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0.5rem;
+  gap: 0.1rem;
+  background: rgba(255,255,255,0.6);
+  border-radius: 14px 14px 0 0;
+  flex-shrink: 0;
+}
+
+.layer-tab {
+  flex: 1;
+  padding: 0.55rem 0.5rem 0.45rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: oklch(58% 0.02 256);
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.layer-tab:hover {
+  color: oklch(30% 0.03 256);
+}
+
+.layer-tab.active {
+  color: oklch(27.8% 0.033 256.8);
+  border-bottom-color: oklch(27.8% 0.033 256.8);
+}
+
+/* ─── Story Preset Cards ─────────────────────────── */
+.preset-list {
+  list-style: none;
+  padding: 0.5rem 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.preset-card {
+  border: 1.5px solid var(--border);
+  border-left: 3px solid var(--preset-accent, oklch(60% 0.1 256));
+  border-radius: 10px;
+  padding: 0.6rem 0.65rem 0.55rem;
+  background: rgba(255,255,255,0.7);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.preset-card:hover {
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+}
+
+.preset-card.active {
+  background: color-mix(in oklch, var(--preset-accent, #555) 7%, white);
+  border-color: color-mix(in oklch, var(--preset-accent, #555) 40%, transparent);
+  border-left-color: var(--preset-accent, #555);
+}
+
+.preset-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.preset-card-titles {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.preset-card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: oklch(27.8% 0.033 256.8);
+  line-height: 1.2;
+}
+
+.preset-card-tagline {
+  font-size: 0.68rem;
+  color: oklch(55% 0.025 256);
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.preset-card-desc {
+  font-size: 0.68rem;
+  color: oklch(48% 0.02 256);
+  line-height: 1.45;
+  margin: 0 0 0.45rem;
+}
+
+.preset-activate-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 6px;
+  border: 1.5px solid;
+  background: transparent;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.12s, color 0.12s, opacity 0.12s;
+  white-space: nowrap;
+  align-self: flex-start;
+  margin-top: 0.05rem;
+}
+
+.preset-activate-btn:hover {
+  opacity: 0.8;
+}
+
+.preset-activate-btn.active {
+  color: #fff;
+}
+
+.preset-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.12rem 0.4rem 0.12rem 0.3rem;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+.preset-chip-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 

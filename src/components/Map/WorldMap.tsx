@@ -29,6 +29,7 @@ import {
 } from '../../data/resourcesClimate';
 import PowerAlliancesLayer from './PowerAlliancesLayer';
 import type { PowerAllianceCategory } from '../../data/powerAlliances';
+import type { LayerPreset } from '../../data/storyPresets';
 
 const ROLE_COLORS: Record<string, string> = {
   'aggressor':         '#dc2626',
@@ -143,9 +144,11 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   const activeResourcesLayersRef = useRef(activeResourcesLayers);
   activeResourcesLayersRef.current = activeResourcesLayers;
   const [activePowerAllianceLayers, setActivePowerAllianceLayers] = useState<Set<PowerAllianceCategory>>(new Set());
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
 
   const handleLayerToggle = useCallback((id: TradeLaneCategory) => {
+    setActivePresetId(null);
     setActiveLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -154,6 +157,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   }, []);
 
   const handleNaturalLayerToggle = useCallback((id: NaturalFeatureCategory) => {
+    setActivePresetId(null);
     setActiveNaturalLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -162,6 +166,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   }, []);
 
   const handleMilitaryLayerToggle = useCallback((id: MilitaryFeatureCategory) => {
+    setActivePresetId(null);
     setActiveMilitaryLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -170,6 +175,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   }, []);
 
   const handleResourcesLayerToggle = useCallback((id: ResourcesClimateCategory) => {
+    setActivePresetId(null);
     setActiveResourcesLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -178,12 +184,32 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   }, []);
 
   const handlePowerAllianceToggle = useCallback((id: PowerAllianceCategory) => {
+    setActivePresetId(null);
     setActivePowerAllianceLayers((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }, []);
+
+  const handleApplyPreset = useCallback((preset: LayerPreset) => {
+    if (activePresetId === preset.id) {
+      // Toggle off: clear all layers
+      setActivePresetId(null);
+      setActiveLayers(new Set());
+      setActiveNaturalLayers(new Set());
+      setActiveMilitaryLayers(new Set());
+      setActiveResourcesLayers(new Set());
+      setActivePowerAllianceLayers(new Set());
+    } else {
+      setActivePresetId(preset.id);
+      setActiveLayers(new Set(preset.trade));
+      setActiveNaturalLayers(new Set(preset.natural));
+      setActiveMilitaryLayers(new Set(preset.military));
+      setActiveResourcesLayers(new Set(preset.resources));
+      setActivePowerAllianceLayers(new Set(preset.alliances));
+    }
+  }, [activePresetId]);
 
   // Sync Mapbox feature state when selectedCountry prop changes
   useEffect(() => {
@@ -712,6 +738,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
           onResourcesToggle={handleResourcesLayerToggle}
           activePowerAllianceLayers={activePowerAllianceLayers}
           onPowerAllianceToggle={handlePowerAllianceToggle}
+          activePresetId={activePresetId}
+          onApplyPreset={handleApplyPreset}
         />
       )}
 
@@ -736,7 +764,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
               <polyline points="2 17 12 22 22 17" />
               <polyline points="2 12 12 17 22 12" />
             </svg>
-            Data Layers
+            Visualise
           </button>
 
           {!simulationRoles && (
