@@ -355,6 +355,12 @@ export const WATER_STRESS_COLORS: Record<WaterStressLevel, string> = {
   'medium-high': '#f9a825',
 };
 
+export const WATER_STRESS_LABELS: Record<WaterStressLevel, string> = {
+  'extreme':     'Extreme Stress',
+  'high':        'High Stress',
+  'medium-high': 'Medium-High Stress',
+};
+
 export const WATER_STRESS_DATA: Record<string, WaterStressLevel> = {
   // Extreme water stress (>80% baseline withdrawal ratio)
   BHR: 'extreme', KWT: 'extreme', QAT: 'extreme', ARE: 'extreme',
@@ -395,6 +401,13 @@ export const FOOD_DEPENDENCY_COLORS: Record<FoodDependencyLevel, string> = {
   'moderate': '#f9a825', // yellow — 10–20%
 };
 
+export const FOOD_DEPENDENCY_LABELS: Record<FoodDependencyLevel, string> = {
+  'exporter': 'Net Exporter',
+  'critical': 'Critical (>40%)',
+  'high':     'High (20–40%)',
+  'moderate': 'Moderate (10–20%)',
+};
+
 export const FOOD_DEPENDENCY_DATA: Record<string, FoodDependencyLevel> = {
   // Net wheat exporters (geopolitical context anchors)
   RUS: 'exporter', UKR: 'exporter', USA: 'exporter', CAN: 'exporter',
@@ -430,6 +443,12 @@ export const CLIMATE_RISK_COLORS: Record<ClimateRiskLevel, string> = {
   'critical': '#880e4f',
   'high':     '#c62828',
   'medium':   '#f57f17',
+};
+
+export const CLIMATE_RISK_LABELS: Record<ClimateRiskLevel, string> = {
+  'critical': 'Critical Risk',
+  'high':     'High Risk',
+  'medium':   'Medium Risk',
 };
 
 export const CLIMATE_RISK_DATA: Record<string, ClimateRiskLevel> = {

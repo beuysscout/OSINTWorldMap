@@ -420,6 +420,32 @@ body {
   max-width: 220px;
 }
 
+.map-tooltip .tooltip-divider {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 5px 0 3px;
+}
+
+.map-tooltip .tooltip-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.7rem;
+}
+
+.map-tooltip .tooltip-row-label {
+  color: oklch(55% 0.03 256);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 48px;
+}
+
+.map-tooltip .tooltip-row-value {
+  font-weight: 700;
+}
+
 /* ─── Geo Labels ────────────────────────────────── */
 .geo-label {
   display: block;

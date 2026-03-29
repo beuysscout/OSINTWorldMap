@@ -21,7 +21,12 @@ import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 import { NATION_LABELS } from '../../data/militaryFeatures';
 import type { ActiveRole } from '../../data/allianceDrag';
 import type { ResourcesClimateCategory } from '../../data/resourcesClimate';
-import { MINERAL_LABELS, MINERAL_COLORS } from '../../data/resourcesClimate';
+import {
+  MINERAL_LABELS, MINERAL_COLORS,
+  WATER_STRESS_DATA, WATER_STRESS_COLORS, WATER_STRESS_LABELS,
+  FOOD_DEPENDENCY_DATA, FOOD_DEPENDENCY_COLORS, FOOD_DEPENDENCY_LABELS,
+  CLIMATE_RISK_DATA, CLIMATE_RISK_COLORS, CLIMATE_RISK_LABELS,
+} from '../../data/resourcesClimate';
 import PowerAlliancesLayer from './PowerAlliancesLayer';
 import type { PowerAllianceCategory } from '../../data/powerAlliances';
 
@@ -132,6 +137,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
   const [activeMilitaryLayers, setActiveMilitaryLayers] = useState<Set<MilitaryFeatureCategory>>(new Set());
   const [activeResourcesLayers, setActiveResourcesLayers] = useState<Set<ResourcesClimateCategory>>(new Set());
+  const activeResourcesLayersRef = useRef(activeResourcesLayers);
+  activeResourcesLayersRef.current = activeResourcesLayers;
   const [activePowerAllianceLayers, setActivePowerAllianceLayers] = useState<Set<PowerAllianceCategory>>(new Set());
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
 
@@ -370,16 +377,50 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
         const currentSelected = selectedCountryRef.current;
         const showCompareHint = currentSelected && alpha3 !== currentSelected;
+        const rcLayers = activeResourcesLayersRef.current;
+        const waterLevel = rcLayers.has('waterStress') ? (WATER_STRESS_DATA[alpha3] ?? null) : null;
+        const foodLevel = rcLayers.has('foodImport') ? (FOOD_DEPENDENCY_DATA[alpha3] ?? null) : null;
+        const climateLevel = rcLayers.has('climateDisplacement') ? (CLIMATE_RISK_DATA[alpha3] ?? null) : null;
+        const hasResourceData = waterLevel || foodLevel || climateLevel;
         setTooltip({
           x: e.point.x,
           y: e.point.y,
-          content: showCompareHint ? (
+          content: (
             <>
               <strong>{name}</strong>
-              <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)' }}>↔ Click to compare</div>
+              {hasResourceData && (
+                <>
+                  <hr className="tooltip-divider" />
+                  {waterLevel && (
+                    <div className="tooltip-row">
+                      <span className="tooltip-row-label">Water</span>
+                      <span className="tooltip-row-value" style={{ color: WATER_STRESS_COLORS[waterLevel] }}>
+                        {WATER_STRESS_LABELS[waterLevel]}
+                      </span>
+                    </div>
+                  )}
+                  {foodLevel && (
+                    <div className="tooltip-row">
+                      <span className="tooltip-row-label">Wheat</span>
+                      <span className="tooltip-row-value" style={{ color: FOOD_DEPENDENCY_COLORS[foodLevel] }}>
+                        {FOOD_DEPENDENCY_LABELS[foodLevel]}
+                      </span>
+                    </div>
+                  )}
+                  {climateLevel && (
+                    <div className="tooltip-row">
+                      <span className="tooltip-row-label">Climate</span>
+                      <span className="tooltip-row-value" style={{ color: CLIMATE_RISK_COLORS[climateLevel] }}>
+                        {CLIMATE_RISK_LABELS[climateLevel]}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              {showCompareHint && (
+                <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)', marginTop: hasResourceData ? 5 : 3 }}>↔ Click to compare</div>
+              )}
             </>
-          ) : (
-            <span>{name}</span>
           ),
         });
       } else if (tradeFeat) {
