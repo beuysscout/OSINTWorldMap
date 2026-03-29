@@ -362,6 +362,31 @@ body {
   bottom: 56px !important;
 }
 
+/* ─── Projection Toggle ─────────────────────────── */
+.projection-toggle {
+  position: absolute;
+  bottom: 200px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  color: oklch(45% 0.03 256);
+  cursor: pointer;
+  pointer-events: all;
+  transition: background 0.15s, color 0.15s;
+}
+.projection-toggle:hover {
+  background: rgba(255, 255, 255, 1);
+  color: var(--accent);
+}
+
 /* ─── Attribution ───────────────────────────────── */
 .mapboxgl-ctrl-attrib {
   background: rgba(255, 255, 255, 0.72) !important;

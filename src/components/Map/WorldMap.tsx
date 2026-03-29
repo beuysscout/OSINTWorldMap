@@ -123,6 +123,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   const prevSelectedRef = useRef<string | null>(null);
   const prevComparedRef = useRef<string | null>(null);
   const simActiveCodesRef = useRef<Set<string>>(new Set());
+  // Tracks current viewport so it can be restored when the Map remounts on projection switch
+  const viewStateRef = useRef({ latitude: 20, longitude: 0, zoom: 2.5, bearing: 0, pitch: 0 });
   // Refs so mouse callbacks always see current values without re-creating
   const selectedCountryRef = useRef(selectedCountry);
   const onCompareSelectRef = useRef(onCompareSelect);
@@ -131,6 +133,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   onCompareSelectRef.current = onCompareSelect;
   simulationRolesRef.current = simulationRoles;
 
+  const [isGlobe, setIsGlobe] = useState(true);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
@@ -479,6 +482,10 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
     [],
   );
 
+  const onMove = useCallback((e: { viewState: { latitude: number; longitude: number; zoom: number; bearing: number; pitch: number } }) => {
+    viewStateRef.current = e.viewState;
+  }, []);
+
   const onMouseLeave = useCallback(() => {
     const map = mapRef.current;
     if (hoveredIdRef.current !== null && map) {
@@ -555,15 +562,17 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   return (
     <div className="map-wrapper">
       <Map
+        key={isGlobe ? 'globe' : 'flat'}
         ref={mapRef}
-        initialViewState={{ latitude: 20, longitude: 0, zoom: 2.5 }}
-        minZoom={2}
+        initialViewState={viewStateRef.current}
+        minZoom={isGlobe ? 0.5 : 2}
         maxZoom={7}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        maxBounds={[[-180, -85], [180, 85]]}
         style={{ width: '100%', height: '100%' }}
         interactiveLayerIds={interactiveLayerIds}
+        onLoad={() => mapRef.current?.getMap().setProjection({ name: isGlobe ? 'globe' : 'mercator' })}
+        onMove={onMove}
         onMouseMove={onMouseMove}
         onMouseOut={onMouseLeave}
         onClick={onClick}
@@ -651,6 +660,34 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
       {/* Overlay — sits above Mapbox canvas; pointer-events: none so map stays interactive */}
       <div className="map-overlay">
+
+      {/* Projection toggle — above zoom controls, bottom-right */}
+      <button
+        className="projection-toggle"
+        onClick={() => {
+          if (isGlobe && viewStateRef.current.zoom < 2) {
+            viewStateRef.current = { ...viewStateRef.current, zoom: 2 };
+          }
+          setIsGlobe((v) => !v);
+        }}
+        title={isGlobe ? 'Switch to flat map' : 'Switch to globe'}
+      >
+        {isGlobe ? (
+          // Flat map icon (grid/mercator)
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="3" width="20" height="18" rx="2" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <line x1="12" y1="3" x2="12" y2="21" />
+          </svg>
+        ) : (
+          // Globe icon
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+        )}
+      </button>
 
       {/* Floating tooltip */}
       {tooltip && (
