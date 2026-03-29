@@ -21,7 +21,12 @@ import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 import { NATION_LABELS } from '../../data/militaryFeatures';
 import type { ActiveRole } from '../../data/allianceDrag';
 import type { ResourcesClimateCategory } from '../../data/resourcesClimate';
-import { MINERAL_LABELS, MINERAL_COLORS } from '../../data/resourcesClimate';
+import {
+  MINERAL_LABELS, MINERAL_COLORS,
+  WATER_STRESS_DATA, WATER_STRESS_COLORS, WATER_STRESS_LABELS,
+  FOOD_DEPENDENCY_DATA, FOOD_DEPENDENCY_COLORS, FOOD_DEPENDENCY_LABELS,
+  CLIMATE_RISK_DATA, CLIMATE_RISK_COLORS, CLIMATE_RISK_LABELS,
+} from '../../data/resourcesClimate';
 import PowerAlliancesLayer from './PowerAlliancesLayer';
 import type { PowerAllianceCategory } from '../../data/powerAlliances';
 
@@ -118,6 +123,8 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   const prevSelectedRef = useRef<string | null>(null);
   const prevComparedRef = useRef<string | null>(null);
   const simActiveCodesRef = useRef<Set<string>>(new Set());
+  // Tracks current viewport so it can be restored when the Map remounts on projection switch
+  const viewStateRef = useRef({ latitude: 20, longitude: 0, zoom: 2.5, bearing: 0, pitch: 0 });
   // Refs so mouse callbacks always see current values without re-creating
   const selectedCountryRef = useRef(selectedCountry);
   const onCompareSelectRef = useRef(onCompareSelect);
@@ -126,12 +133,15 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   onCompareSelectRef.current = onCompareSelect;
   simulationRolesRef.current = simulationRoles;
 
+  const [isGlobe, setIsGlobe] = useState(true);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [activeLayers, setActiveLayers] = useState<Set<TradeLaneCategory>>(new Set());
   const [activeNaturalLayers, setActiveNaturalLayers] = useState<Set<NaturalFeatureCategory>>(new Set());
   const [activeMilitaryLayers, setActiveMilitaryLayers] = useState<Set<MilitaryFeatureCategory>>(new Set());
   const [activeResourcesLayers, setActiveResourcesLayers] = useState<Set<ResourcesClimateCategory>>(new Set());
+  const activeResourcesLayersRef = useRef(activeResourcesLayers);
+  activeResourcesLayersRef.current = activeResourcesLayers;
   const [activePowerAllianceLayers, setActivePowerAllianceLayers] = useState<Set<PowerAllianceCategory>>(new Set());
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
 
@@ -370,16 +380,50 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         const name = (countryFeat.properties as { name_en?: string })?.name_en ?? alpha3;
         const currentSelected = selectedCountryRef.current;
         const showCompareHint = currentSelected && alpha3 !== currentSelected;
+        const rcLayers = activeResourcesLayersRef.current;
+        const waterLevel = rcLayers.has('waterStress') ? (WATER_STRESS_DATA[alpha3] ?? null) : null;
+        const foodLevel = rcLayers.has('foodImport') ? (FOOD_DEPENDENCY_DATA[alpha3] ?? null) : null;
+        const climateLevel = rcLayers.has('climateDisplacement') ? (CLIMATE_RISK_DATA[alpha3] ?? null) : null;
+        const hasResourceData = waterLevel || foodLevel || climateLevel;
         setTooltip({
           x: e.point.x,
           y: e.point.y,
-          content: showCompareHint ? (
+          content: (
             <>
               <strong>{name}</strong>
-              <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)' }}>↔ Click to compare</div>
+              {hasResourceData && (
+                <>
+                  <hr className="tooltip-divider" />
+                  {waterLevel && (
+                    <div className="tooltip-row">
+                      <span className="tooltip-row-label">Water</span>
+                      <span className="tooltip-row-value" style={{ color: WATER_STRESS_COLORS[waterLevel] }}>
+                        {WATER_STRESS_LABELS[waterLevel]}
+                      </span>
+                    </div>
+                  )}
+                  {foodLevel && (
+                    <div className="tooltip-row">
+                      <span className="tooltip-row-label">Wheat</span>
+                      <span className="tooltip-row-value" style={{ color: FOOD_DEPENDENCY_COLORS[foodLevel] }}>
+                        {FOOD_DEPENDENCY_LABELS[foodLevel]}
+                      </span>
+                    </div>
+                  )}
+                  {climateLevel && (
+                    <div className="tooltip-row">
+                      <span className="tooltip-row-label">Climate</span>
+                      <span className="tooltip-row-value" style={{ color: CLIMATE_RISK_COLORS[climateLevel] }}>
+                        {CLIMATE_RISK_LABELS[climateLevel]}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              {showCompareHint && (
+                <div className="tooltip-sub" style={{ color: 'rgba(204,85,0,0.9)', marginTop: hasResourceData ? 5 : 3 }}>↔ Click to compare</div>
+              )}
             </>
-          ) : (
-            <span>{name}</span>
           ),
         });
       } else if (tradeFeat) {
@@ -437,6 +481,10 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
     },
     [],
   );
+
+  const onMove = useCallback((e: { viewState: { latitude: number; longitude: number; zoom: number; bearing: number; pitch: number } }) => {
+    viewStateRef.current = e.viewState;
+  }, []);
 
   const onMouseLeave = useCallback(() => {
     const map = mapRef.current;
@@ -514,15 +562,17 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
   return (
     <div className="map-wrapper">
       <Map
+        key={isGlobe ? 'globe' : 'flat'}
         ref={mapRef}
-        initialViewState={{ latitude: 20, longitude: 0, zoom: 2.5 }}
-        minZoom={2}
+        initialViewState={viewStateRef.current}
+        minZoom={isGlobe ? 0.5 : 2}
         maxZoom={7}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        maxBounds={[[-180, -85], [180, 85]]}
         style={{ width: '100%', height: '100%' }}
         interactiveLayerIds={interactiveLayerIds}
+        onLoad={() => mapRef.current?.getMap().setProjection({ name: isGlobe ? 'globe' : 'mercator' })}
+        onMove={onMove}
         onMouseMove={onMouseMove}
         onMouseOut={onMouseLeave}
         onClick={onClick}
@@ -610,6 +660,34 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
       {/* Overlay — sits above Mapbox canvas; pointer-events: none so map stays interactive */}
       <div className="map-overlay">
+
+      {/* Projection toggle — above zoom controls, bottom-right */}
+      <button
+        className="projection-toggle"
+        onClick={() => {
+          if (isGlobe && viewStateRef.current.zoom < 2) {
+            viewStateRef.current = { ...viewStateRef.current, zoom: 2 };
+          }
+          setIsGlobe((v) => !v);
+        }}
+        title={isGlobe ? 'Switch to flat map' : 'Switch to globe'}
+      >
+        {isGlobe ? (
+          // Flat map icon (grid/mercator)
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="3" width="20" height="18" rx="2" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <line x1="12" y1="3" x2="12" y2="21" />
+          </svg>
+        ) : (
+          // Globe icon
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+        )}
+      </button>
 
       {/* Floating tooltip */}
       {tooltip && (
