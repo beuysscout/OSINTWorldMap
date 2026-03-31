@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { LAYER_DEFS } from '../../data/tradeLanes';
 import type { TradeLaneCategory } from '../../data/tradeLanes';
-import { NATURAL_LAYER_DEFS } from '../../data/naturalFeatures';
-import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
+import { NATURAL_LAYER_DEFS } from '../../data/naturalFeatures.generated';
+import type { NaturalFeatureCategory } from '../../data/naturalFeatures.generated';
 import { MILITARY_LAYER_DEFS } from '../../data/militaryFeatures';
 import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 import { RC_LAYER_DEFS } from '../../data/resourcesClimate';

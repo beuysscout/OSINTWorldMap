@@ -1,0 +1,1993 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "generatedAt": "2026-03-31T12:12:19.314Z",
+    "note": "Seed source extracted from src/data/naturalFeatures.ts"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "river-amazon",
+      "properties": {
+        "name": "Amazon",
+        "category": "rivers",
+        "description": "Largest river by discharge; forms border segments between Peru, Colombia, and Brazil"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -76,
+            -10
+          ],
+          [
+            -74.5,
+            -8.5
+          ],
+          [
+            -72,
+            -7
+          ],
+          [
+            -70,
+            -4.5
+          ],
+          [
+            -68,
+            -3.5
+          ],
+          [
+            -65,
+            -3
+          ],
+          [
+            -62,
+            -3.2
+          ],
+          [
+            -60,
+            -3
+          ],
+          [
+            -58,
+            -3.5
+          ],
+          [
+            -56,
+            -2.5
+          ],
+          [
+            -54,
+            -2
+          ],
+          [
+            -52,
+            -1.8
+          ],
+          [
+            -50.5,
+            -0.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-nile",
+      "properties": {
+        "name": "Nile",
+        "category": "rivers",
+        "description": "Longest river; shapes the border between Sudan and Ethiopia, and defines Egypt"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            32.5,
+            -1
+          ],
+          [
+            31.8,
+            4
+          ],
+          [
+            32.5,
+            9
+          ],
+          [
+            33,
+            14
+          ],
+          [
+            33.5,
+            18
+          ],
+          [
+            32.5,
+            22
+          ],
+          [
+            32,
+            26
+          ],
+          [
+            31.2,
+            30
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-congo",
+      "properties": {
+        "name": "Congo",
+        "category": "rivers",
+        "description": "Forms much of the border between DRC and Republic of Congo"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            26.5,
+            -6
+          ],
+          [
+            25,
+            -4.5
+          ],
+          [
+            23.5,
+            -2.5
+          ],
+          [
+            21,
+            -1
+          ],
+          [
+            19,
+            0.5
+          ],
+          [
+            17.5,
+            1.5
+          ],
+          [
+            16.5,
+            1
+          ],
+          [
+            15.5,
+            -1.5
+          ],
+          [
+            13,
+            -4
+          ],
+          [
+            12.3,
+            -5.8
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-niger",
+      "properties": {
+        "name": "Niger",
+        "category": "rivers",
+        "description": "Defines borders of Mali, Niger, Benin, and Nigeria"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -10.5,
+            12
+          ],
+          [
+            -5,
+            14.5
+          ],
+          [
+            0,
+            16
+          ],
+          [
+            3.5,
+            17
+          ],
+          [
+            4.5,
+            15.5
+          ],
+          [
+            6,
+            14
+          ],
+          [
+            7.5,
+            11.5
+          ],
+          [
+            8,
+            9.5
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            4.5,
+            5.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-zambezi",
+      "properties": {
+        "name": "Zambezi",
+        "category": "rivers",
+        "description": "Forms borders between Zambia, Zimbabwe, Namibia, and Botswana"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            22,
+            -11.5
+          ],
+          [
+            24.5,
+            -14
+          ],
+          [
+            26.5,
+            -14.5
+          ],
+          [
+            28,
+            -15.5
+          ],
+          [
+            30,
+            -17
+          ],
+          [
+            32.5,
+            -17.5
+          ],
+          [
+            34.5,
+            -17.8
+          ],
+          [
+            35.8,
+            -17
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-yangtze",
+      "properties": {
+        "name": "Yangtze",
+        "category": "rivers",
+        "description": "Longest river in Asia; historical cultural and strategic divide in China"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            91,
+            32.5
+          ],
+          [
+            96,
+            33
+          ],
+          [
+            100,
+            30
+          ],
+          [
+            103.5,
+            29
+          ],
+          [
+            106.5,
+            29.5
+          ],
+          [
+            109.5,
+            30.5
+          ],
+          [
+            112.5,
+            30
+          ],
+          [
+            114.5,
+            30.5
+          ],
+          [
+            117,
+            30.8
+          ],
+          [
+            119.5,
+            30.5
+          ],
+          [
+            121.5,
+            31.3
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-mekong",
+      "properties": {
+        "name": "Mekong",
+        "category": "rivers",
+        "description": "Forms the border between Myanmar/Laos and Thailand/China"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            94.5,
+            28
+          ],
+          [
+            98,
+            24.5
+          ],
+          [
+            100,
+            22
+          ],
+          [
+            101.5,
+            19.5
+          ],
+          [
+            102.5,
+            18
+          ],
+          [
+            104,
+            16.5
+          ],
+          [
+            105,
+            14
+          ],
+          [
+            106,
+            12
+          ],
+          [
+            106.8,
+            10.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-danube",
+      "properties": {
+        "name": "Danube",
+        "category": "rivers",
+        "description": "Forms borders between 10 European countries including Romania, Bulgaria, and Serbia"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.5,
+            48
+          ],
+          [
+            13,
+            48.5
+          ],
+          [
+            17,
+            48
+          ],
+          [
+            19.5,
+            47.5
+          ],
+          [
+            22,
+            46.5
+          ],
+          [
+            24.5,
+            45.5
+          ],
+          [
+            27,
+            45.2
+          ],
+          [
+            29,
+            46.5
+          ],
+          [
+            30.5,
+            46
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-rhine",
+      "properties": {
+        "name": "Rhine",
+        "category": "rivers",
+        "description": "Forms the border between Germany and France; historically contested"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9,
+            47
+          ],
+          [
+            8.5,
+            47.8
+          ],
+          [
+            7.5,
+            48.5
+          ],
+          [
+            7.8,
+            49.5
+          ],
+          [
+            7.5,
+            50.5
+          ],
+          [
+            7,
+            51
+          ],
+          [
+            6.5,
+            51.8
+          ],
+          [
+            4.5,
+            52.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-rio-grande",
+      "properties": {
+        "name": "Rio Grande",
+        "category": "rivers",
+        "description": "Forms the entire US–Mexico border from El Paso to the Gulf of Mexico"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -106.5,
+            31.8
+          ],
+          [
+            -104,
+            30
+          ],
+          [
+            -103,
+            29.5
+          ],
+          [
+            -100.5,
+            29
+          ],
+          [
+            -99,
+            28
+          ],
+          [
+            -97.5,
+            26.5
+          ],
+          [
+            -97,
+            25.8
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-mississippi",
+      "properties": {
+        "name": "Mississippi",
+        "category": "rivers",
+        "description": "Major North American river system; historical US interior waterway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -95,
+            47
+          ],
+          [
+            -93,
+            44.5
+          ],
+          [
+            -91.5,
+            42
+          ],
+          [
+            -91,
+            40
+          ],
+          [
+            -90.5,
+            38
+          ],
+          [
+            -89.5,
+            36
+          ],
+          [
+            -90,
+            33.5
+          ],
+          [
+            -90.5,
+            31
+          ],
+          [
+            -89.5,
+            29
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-amur",
+      "properties": {
+        "name": "Amur",
+        "category": "rivers",
+        "description": "Forms the border between Russia and China (Manchuria)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            112,
+            53.5
+          ],
+          [
+            116,
+            53
+          ],
+          [
+            120,
+            52.5
+          ],
+          [
+            124,
+            52
+          ],
+          [
+            127.5,
+            50.5
+          ],
+          [
+            130.5,
+            48.5
+          ],
+          [
+            133.5,
+            47.5
+          ],
+          [
+            134.5,
+            48.4
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-jordan",
+      "properties": {
+        "name": "Jordan",
+        "category": "rivers",
+        "description": "Forms the border between Israel/West Bank and Jordan"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            35.7,
+            33.2
+          ],
+          [
+            35.5,
+            32.5
+          ],
+          [
+            35.5,
+            31.8
+          ],
+          [
+            35.6,
+            31
+          ],
+          [
+            35.6,
+            31.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "river-ganges",
+      "properties": {
+        "name": "Ganges",
+        "category": "rivers",
+        "description": "Sacred river of the Indian subcontinent; culturally divides northern India"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            78.5,
+            30.5
+          ],
+          [
+            79.5,
+            29
+          ],
+          [
+            80.5,
+            27.5
+          ],
+          [
+            82,
+            26.5
+          ],
+          [
+            84.5,
+            26
+          ],
+          [
+            86.5,
+            25.5
+          ],
+          [
+            88.5,
+            24.5
+          ],
+          [
+            89.5,
+            24
+          ],
+          [
+            90.5,
+            23.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-himalayas",
+      "properties": {
+        "name": "Himalayas",
+        "category": "mountains",
+        "description": "World's highest range; forms the border between India, Nepal, Bhutan, and China"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            72.5,
+            34
+          ],
+          [
+            75,
+            33.5
+          ],
+          [
+            78,
+            33
+          ],
+          [
+            80.5,
+            32
+          ],
+          [
+            84,
+            28.5
+          ],
+          [
+            86.5,
+            28
+          ],
+          [
+            89,
+            27.5
+          ],
+          [
+            92,
+            28
+          ],
+          [
+            96,
+            28.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-karakoram",
+      "properties": {
+        "name": "Karakoram",
+        "category": "mountains",
+        "description": "Contains K2; borders Pakistan, China, and the disputed Kashmir region"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            73.5,
+            36.5
+          ],
+          [
+            75.5,
+            36.8
+          ],
+          [
+            77.5,
+            36.5
+          ],
+          [
+            78.5,
+            35.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-hindu-kush",
+      "properties": {
+        "name": "Hindu Kush",
+        "category": "mountains",
+        "description": "Separates Central Asia from the South Asian subcontinent; spans Afghanistan and Pakistan"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            62,
+            36.5
+          ],
+          [
+            65,
+            36.5
+          ],
+          [
+            67.5,
+            36
+          ],
+          [
+            70,
+            36
+          ],
+          [
+            72.5,
+            36.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-alps",
+      "properties": {
+        "name": "Alps",
+        "category": "mountains",
+        "description": "Forms borders between France, Switzerland, Italy, and Austria"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.5,
+            45
+          ],
+          [
+            8,
+            46
+          ],
+          [
+            9.5,
+            46.5
+          ],
+          [
+            11,
+            47
+          ],
+          [
+            12.5,
+            47.5
+          ],
+          [
+            14,
+            47.5
+          ],
+          [
+            15.5,
+            47
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-caucasus",
+      "properties": {
+        "name": "Caucasus",
+        "category": "mountains",
+        "description": "Forms the border between Russia and Georgia/Azerbaijan; divides Europe and Asia"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            37.5,
+            43.5
+          ],
+          [
+            40,
+            43.5
+          ],
+          [
+            42.5,
+            43.2
+          ],
+          [
+            45,
+            42.5
+          ],
+          [
+            47,
+            41.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-andes",
+      "properties": {
+        "name": "Andes",
+        "category": "mountains",
+        "description": "Forms the spine of South America and borders between Chile, Argentina, Bolivia, Peru, Colombia"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -73,
+            10.5
+          ],
+          [
+            -76,
+            5
+          ],
+          [
+            -78.5,
+            0
+          ],
+          [
+            -79,
+            -5
+          ],
+          [
+            -79,
+            -10
+          ],
+          [
+            -75.5,
+            -15
+          ],
+          [
+            -72,
+            -20
+          ],
+          [
+            -68,
+            -25
+          ],
+          [
+            -67.5,
+            -30
+          ],
+          [
+            -70,
+            -35
+          ],
+          [
+            -71.5,
+            -40
+          ],
+          [
+            -72.5,
+            -45
+          ],
+          [
+            -73.5,
+            -50
+          ],
+          [
+            -74.5,
+            -55
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-rockies",
+      "properties": {
+        "name": "Rocky Mountains",
+        "category": "mountains",
+        "description": "North American cordillera; forms the continental divide"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -136,
+            60
+          ],
+          [
+            -130,
+            56
+          ],
+          [
+            -122,
+            50
+          ],
+          [
+            -116,
+            46
+          ],
+          [
+            -112,
+            42
+          ],
+          [
+            -107,
+            38
+          ],
+          [
+            -105.5,
+            34
+          ],
+          [
+            -104,
+            31.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-atlas",
+      "properties": {
+        "name": "Atlas Mountains",
+        "category": "mountains",
+        "description": "Separates the Mediterranean coast from the Sahara in Morocco, Algeria, and Tunisia"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -6,
+            35.5
+          ],
+          [
+            -3,
+            34.5
+          ],
+          [
+            0.5,
+            33.5
+          ],
+          [
+            3,
+            33.5
+          ],
+          [
+            6,
+            34
+          ],
+          [
+            9.5,
+            37
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-urals",
+      "properties": {
+        "name": "Ural Mountains",
+        "category": "mountains",
+        "description": "Traditional geographic boundary between Europe and Asia"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            60.5,
+            69
+          ],
+          [
+            60,
+            64
+          ],
+          [
+            59.5,
+            60
+          ],
+          [
+            58.5,
+            56
+          ],
+          [
+            57,
+            52
+          ],
+          [
+            55.5,
+            51
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-zagros",
+      "properties": {
+        "name": "Zagros Mountains",
+        "category": "mountains",
+        "description": "Forms border between Iran, Iraq, and Turkey; shields the Iranian plateau"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            38.5,
+            37.5
+          ],
+          [
+            42,
+            36
+          ],
+          [
+            44,
+            34
+          ],
+          [
+            46,
+            32
+          ],
+          [
+            48.5,
+            30
+          ],
+          [
+            50,
+            27.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-great-dividing",
+      "properties": {
+        "name": "Great Dividing Range",
+        "category": "mountains",
+        "description": "Australia's primary mountain range; divides coastal Australia from the interior"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            145,
+            -15.5
+          ],
+          [
+            144.5,
+            -18
+          ],
+          [
+            144,
+            -22
+          ],
+          [
+            148,
+            -26
+          ],
+          [
+            151,
+            -29
+          ],
+          [
+            151.5,
+            -32
+          ],
+          [
+            150,
+            -35
+          ],
+          [
+            148.5,
+            -37.5
+          ],
+          [
+            148,
+            -39
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-pyrenees",
+      "properties": {
+        "name": "Pyrenees",
+        "category": "mountains",
+        "description": "Forms the border between France and Spain"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -1.8,
+            43.5
+          ],
+          [
+            0.5,
+            43
+          ],
+          [
+            2,
+            42.5
+          ],
+          [
+            3.5,
+            42.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-carpathians",
+      "properties": {
+        "name": "Carpathians",
+        "category": "mountains",
+        "description": "Arc of mountains through Central Europe; bounds Hungary and forms Slovakia/Romania borders"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            17,
+            49.5
+          ],
+          [
+            19.5,
+            49.5
+          ],
+          [
+            22,
+            49
+          ],
+          [
+            24.5,
+            49.5
+          ],
+          [
+            26.5,
+            48.5
+          ],
+          [
+            27,
+            47.5
+          ],
+          [
+            25.5,
+            46
+          ],
+          [
+            24,
+            45.5
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "mt-tian-shan",
+      "properties": {
+        "name": "Tian Shan",
+        "category": "mountains",
+        "description": "Forms borders between Kazakhstan, Kyrgyzstan, and China"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            70,
+            43
+          ],
+          [
+            74,
+            43.5
+          ],
+          [
+            77.5,
+            43
+          ],
+          [
+            80,
+            42.5
+          ],
+          [
+            82.5,
+            41.5
+          ],
+          [
+            85.5,
+            41
+          ],
+          [
+            88.5,
+            42
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-sahara",
+      "properties": {
+        "name": "Sahara",
+        "category": "deserts",
+        "description": "World's largest hot desert; defines North Africa and separates Sub-Saharan Africa"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -17,
+              20.5
+            ],
+            [
+              -5,
+              17.5
+            ],
+            [
+              0,
+              16
+            ],
+            [
+              5,
+              17.5
+            ],
+            [
+              10,
+              20
+            ],
+            [
+              15,
+              23.5
+            ],
+            [
+              20,
+              25
+            ],
+            [
+              25,
+              28.5
+            ],
+            [
+              30,
+              29
+            ],
+            [
+              34,
+              27.5
+            ],
+            [
+              37,
+              24
+            ],
+            [
+              36,
+              20.5
+            ],
+            [
+              33,
+              18.5
+            ],
+            [
+              28,
+              17.5
+            ],
+            [
+              20,
+              16.5
+            ],
+            [
+              12,
+              16
+            ],
+            [
+              5,
+              15.5
+            ],
+            [
+              0,
+              14
+            ],
+            [
+              -5,
+              15
+            ],
+            [
+              -10,
+              17
+            ],
+            [
+              -15,
+              19.5
+            ],
+            [
+              -17,
+              20.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-arabian",
+      "properties": {
+        "name": "Arabian Desert",
+        "category": "deserts",
+        "description": "Covers most of the Arabian Peninsula; strategic energy region"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              36.5,
+              29.5
+            ],
+            [
+              40.5,
+              28
+            ],
+            [
+              45,
+              22.5
+            ],
+            [
+              50,
+              20
+            ],
+            [
+              55,
+              22.5
+            ],
+            [
+              59,
+              23.5
+            ],
+            [
+              60.5,
+              24.5
+            ],
+            [
+              60,
+              28
+            ],
+            [
+              57.5,
+              30
+            ],
+            [
+              55,
+              32
+            ],
+            [
+              50,
+              30.5
+            ],
+            [
+              46,
+              30.5
+            ],
+            [
+              42,
+              31.5
+            ],
+            [
+              38.5,
+              31.5
+            ],
+            [
+              36.5,
+              29.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-gobi",
+      "properties": {
+        "name": "Gobi",
+        "category": "deserts",
+        "description": "Cold desert spanning northern China and southern Mongolia"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              90,
+              42
+            ],
+            [
+              96,
+              42.5
+            ],
+            [
+              102,
+              42
+            ],
+            [
+              107,
+              44
+            ],
+            [
+              112,
+              46.5
+            ],
+            [
+              117,
+              48.5
+            ],
+            [
+              120,
+              48
+            ],
+            [
+              122,
+              46.5
+            ],
+            [
+              120,
+              43
+            ],
+            [
+              116,
+              40.5
+            ],
+            [
+              111,
+              39
+            ],
+            [
+              106,
+              38.5
+            ],
+            [
+              100,
+              38
+            ],
+            [
+              94,
+              38.5
+            ],
+            [
+              90,
+              40
+            ],
+            [
+              90,
+              42
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-kalahari",
+      "properties": {
+        "name": "Kalahari",
+        "category": "deserts",
+        "description": "Semi-arid desert spanning Botswana, Namibia, and South Africa"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              18.5,
+              -18
+            ],
+            [
+              22,
+              -18
+            ],
+            [
+              25,
+              -19
+            ],
+            [
+              27.5,
+              -20.5
+            ],
+            [
+              28,
+              -24
+            ],
+            [
+              27,
+              -27.5
+            ],
+            [
+              24,
+              -29.5
+            ],
+            [
+              21,
+              -29
+            ],
+            [
+              18.5,
+              -27.5
+            ],
+            [
+              17,
+              -24
+            ],
+            [
+              18,
+              -20
+            ],
+            [
+              18.5,
+              -18
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-namib",
+      "properties": {
+        "name": "Namib",
+        "category": "deserts",
+        "description": "Coastal desert along the Atlantic shore of Namibia and Angola"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              12.5,
+              -17.5
+            ],
+            [
+              14,
+              -17.5
+            ],
+            [
+              16.5,
+              -19
+            ],
+            [
+              17.5,
+              -22
+            ],
+            [
+              17.5,
+              -26
+            ],
+            [
+              16.5,
+              -29
+            ],
+            [
+              15.5,
+              -30.5
+            ],
+            [
+              14.5,
+              -30
+            ],
+            [
+              13,
+              -27
+            ],
+            [
+              12,
+              -23
+            ],
+            [
+              12,
+              -19
+            ],
+            [
+              12.5,
+              -17.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-atacama",
+      "properties": {
+        "name": "Atacama",
+        "category": "deserts",
+        "description": "World's driest non-polar desert; coastal Chile and Peru"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -70.5,
+              -18
+            ],
+            [
+              -68.5,
+              -17.5
+            ],
+            [
+              -67,
+              -19
+            ],
+            [
+              -67,
+              -23
+            ],
+            [
+              -68,
+              -26.5
+            ],
+            [
+              -70.5,
+              -28.5
+            ],
+            [
+              -71,
+              -26
+            ],
+            [
+              -70.5,
+              -22
+            ],
+            [
+              -70.5,
+              -18
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-great-victoria",
+      "properties": {
+        "name": "Australian Desert",
+        "category": "deserts",
+        "description": "Includes the Great Victoria, Gibson, and Great Sandy deserts"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              116,
+              -24
+            ],
+            [
+              121,
+              -23.5
+            ],
+            [
+              126,
+              -23.5
+            ],
+            [
+              130,
+              -25
+            ],
+            [
+              134,
+              -26.5
+            ],
+            [
+              136.5,
+              -30
+            ],
+            [
+              133,
+              -32
+            ],
+            [
+              129,
+              -32
+            ],
+            [
+              124.5,
+              -32
+            ],
+            [
+              120,
+              -30.5
+            ],
+            [
+              117,
+              -27.5
+            ],
+            [
+              116,
+              -24
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-taklamakan",
+      "properties": {
+        "name": "Taklamakan",
+        "category": "deserts",
+        "description": "Large desert in China's Xinjiang region; a historic barrier along the Silk Road"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              76,
+              40.5
+            ],
+            [
+              80,
+              40.5
+            ],
+            [
+              84,
+              40
+            ],
+            [
+              88,
+              40.5
+            ],
+            [
+              90,
+              40.5
+            ],
+            [
+              91.5,
+              39.5
+            ],
+            [
+              90.5,
+              37.5
+            ],
+            [
+              88,
+              37
+            ],
+            [
+              84,
+              37
+            ],
+            [
+              80,
+              37.5
+            ],
+            [
+              77.5,
+              38.5
+            ],
+            [
+              76,
+              39.5
+            ],
+            [
+              76,
+              40.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-iranian",
+      "properties": {
+        "name": "Iranian Plateau Deserts",
+        "category": "deserts",
+        "description": "Dasht-e Kavir and Dasht-e Lut; central Iran's salt deserts"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              51,
+              36.5
+            ],
+            [
+              54,
+              36
+            ],
+            [
+              57.5,
+              36
+            ],
+            [
+              60,
+              35
+            ],
+            [
+              61,
+              33
+            ],
+            [
+              60.5,
+              30.5
+            ],
+            [
+              58,
+              28.5
+            ],
+            [
+              55,
+              29.5
+            ],
+            [
+              52,
+              30.5
+            ],
+            [
+              50,
+              32.5
+            ],
+            [
+              50.5,
+              34.5
+            ],
+            [
+              51,
+              36.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "desert-patagonian",
+      "properties": {
+        "name": "Patagonian Desert",
+        "category": "deserts",
+        "description": "Cold desert in southern Argentina; sits in rain shadow of the Andes"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.5,
+              -38.5
+            ],
+            [
+              -66,
+              -38
+            ],
+            [
+              -64,
+              -38.5
+            ],
+            [
+              -63.5,
+              -41
+            ],
+            [
+              -64,
+              -44
+            ],
+            [
+              -65,
+              -47
+            ],
+            [
+              -66,
+              -50
+            ],
+            [
+              -67.5,
+              -51.5
+            ],
+            [
+              -69,
+              -50
+            ],
+            [
+              -70,
+              -47
+            ],
+            [
+              -70.5,
+              -44
+            ],
+            [
+              -70,
+              -41
+            ],
+            [
+              -68.5,
+              -38.5
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

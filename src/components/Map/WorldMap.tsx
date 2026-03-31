@@ -17,7 +17,7 @@ import HistoricalBordersLayer, { HISTORICAL_FILL_ID } from './HistoricalBordersL
 import TimeSlider from '../UI/TimeSlider';
 import { HISTORICAL_SNAPSHOTS } from '../../data/historicalBorders';
 import type { TradeLaneCategory } from '../../data/tradeLanes';
-import type { NaturalFeatureCategory } from '../../data/naturalFeatures';
+import type { NaturalFeatureCategory } from '../../data/naturalFeatures.generated';
 import type { MilitaryFeatureCategory } from '../../data/militaryFeatures';
 import { NATION_LABELS } from '../../data/militaryFeatures';
 import type { ActiveRole } from '../../data/allianceDrag';
