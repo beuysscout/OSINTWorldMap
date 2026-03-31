@@ -75,6 +75,18 @@ function getPresetLayerChips(preset: LayerPreset): { label: string; color: strin
   return chips;
 }
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`layer-chevron${open ? ' open' : ''}`}
+      width="10" height="10" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
 function LayerBtn({
   active,
   color,
@@ -109,6 +121,28 @@ function LayerBtn({
   );
 }
 
+function SectionHeader({
+  label,
+  activeCount,
+  open,
+  onToggle,
+}: {
+  label: string;
+  activeCount: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button className={`layer-section-header${open ? ' open' : ''}`} onClick={onToggle}>
+      <span className="layer-section-label">{label}</span>
+      {activeCount > 0 && !open && (
+        <span className="layer-section-badge">{activeCount} on</span>
+      )}
+      <Chevron open={open} />
+    </button>
+  );
+}
+
 export default function LayerControl({
   activeLayers,
   onToggle,
@@ -124,6 +158,16 @@ export default function LayerControl({
   onApplyPreset,
 }: LayerControlProps) {
   const [activeTab, setActiveTab] = useState<'stories' | 'layers'>('stories');
+  const [expandedPresetId, setExpandedPresetId] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+
+  function toggleSection(id: string) {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <div className="layer-control">
@@ -148,6 +192,7 @@ export default function LayerControl({
         <ul className="preset-list">
           {STORY_PRESETS.map((preset) => {
             const isActive = activePresetId === preset.id;
+            const isExpanded = isActive || expandedPresetId === preset.id;
             const chips = getPresetLayerChips(preset);
             return (
               <li key={preset.id}>
@@ -155,15 +200,35 @@ export default function LayerControl({
                   className={`preset-card${isActive ? ' active' : ''}`}
                   style={{ '--preset-accent': preset.accentColor } as React.CSSProperties}
                 >
-                  <div className="preset-card-header">
+                  <button
+                    className="preset-card-header"
+                    onClick={() => setExpandedPresetId(isExpanded ? null : preset.id)}
+                    aria-expanded={isExpanded}
+                  >
                     <div className="preset-card-titles">
                       <span className="preset-card-title">{preset.title}</span>
                       <span className="preset-card-tagline">{preset.tagline}</span>
                     </div>
+                    <Chevron open={isExpanded} />
+                  </button>
+                  <div className={`preset-card-body${isExpanded ? ' open' : ''}`}>
+                    <p className="preset-card-desc">{preset.description}</p>
+                    <div className="preset-card-chips">
+                      {chips.map((chip) => (
+                        <span
+                          key={chip.label}
+                          className="preset-chip"
+                          style={{ borderColor: chip.color, color: chip.color }}
+                        >
+                          <span className="preset-chip-dot" style={{ background: chip.color }} />
+                          {chip.label}
+                        </span>
+                      ))}
+                    </div>
                     <button
                       className={`preset-activate-btn${isActive ? ' active' : ''}`}
                       style={isActive ? { backgroundColor: preset.accentColor, borderColor: preset.accentColor } : { borderColor: preset.accentColor, color: preset.accentColor }}
-                      onClick={() => onApplyPreset(preset)}
+                      onClick={(e) => { e.stopPropagation(); onApplyPreset(preset); }}
                     >
                       {isActive ? (
                         <>
@@ -174,19 +239,6 @@ export default function LayerControl({
                         </>
                       ) : 'Activate'}
                     </button>
-                  </div>
-                  <p className="preset-card-desc">{preset.description}</p>
-                  <div className="preset-card-chips">
-                    {chips.map((chip) => (
-                      <span
-                        key={chip.label}
-                        className="preset-chip"
-                        style={{ borderColor: chip.color, color: chip.color }}
-                      >
-                        <span className="preset-chip-dot" style={{ background: chip.color }} />
-                        {chip.label}
-                      </span>
-                    ))}
                   </div>
                 </div>
               </li>
@@ -199,107 +251,156 @@ export default function LayerControl({
       {activeTab === 'layers' && (
         <ul className="layer-control-list">
 
-          {/* ── Diplomatic Relationships ─────────────────────────────────────── */}
-          {DIPLOMATIC_GROUPS.map((group) => (
-            <li key={group.label} className="layer-group">
-              <span className="layer-group-label">{group.label}</span>
-              <ul className="layer-group-items">
-                {group.ids.map((id) => {
-                  const def = POWER_ALLIANCE_DEF_MAP[id];
-                  return (
-                    <li key={id}>
-                      <LayerBtn
-                        active={activePowerAllianceLayers.has(id)}
-                        color={def.color}
-                        label={def.label}
-                        description={def.description}
-                        onToggle={() => onPowerAllianceToggle(id)}
-                      />
-                    </li>
-                  );
-                })}
+          {/* ── Diplomatic ───────────────────────────────────────────────────── */}
+          <li className="layer-section">
+            <SectionHeader
+              label="Diplomatic"
+              activeCount={activePowerAllianceLayers.size}
+              open={expandedSections.has('diplomatic')}
+              onToggle={() => toggleSection('diplomatic')}
+            />
+            {expandedSections.has('diplomatic') && (
+              <ul className="layer-section-body">
+                {DIPLOMATIC_GROUPS.map((group) => (
+                  <li key={group.label} className="layer-group">
+                    <span className="layer-group-label">{group.label}</span>
+                    <ul className="layer-group-items">
+                      {group.ids.map((id) => {
+                        const def = POWER_ALLIANCE_DEF_MAP[id];
+                        return (
+                          <li key={id}>
+                            <LayerBtn
+                              active={activePowerAllianceLayers.has(id)}
+                              color={def.color}
+                              label={def.label}
+                              description={def.description}
+                              onToggle={() => onPowerAllianceToggle(id)}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
+                ))}
               </ul>
-            </li>
-          ))}
+            )}
+          </li>
 
-          {/* ── Trade & Infrastructure ────────────────────────────────────────── */}
-          {LAYER_GROUPS.map((group) => (
-            <li key={group.label} className="layer-group">
-              <span className="layer-group-label">{group.label}</span>
-              <ul className="layer-group-items">
-                {group.ids.map((id) => {
-                  const layer = LAYER_DEF_MAP[id];
-                  return (
-                    <li key={id}>
-                      <LayerBtn
-                        active={activeLayers.has(id)}
-                        color={layer.color}
-                        label={layer.label}
-                        description={layer.description}
-                        onToggle={() => onToggle(id)}
-                      />
-                    </li>
-                  );
-                })}
+          {/* ── Trade & Routes ────────────────────────────────────────────────── */}
+          <li className="layer-section">
+            <SectionHeader
+              label="Trade & Routes"
+              activeCount={activeLayers.size}
+              open={expandedSections.has('trade')}
+              onToggle={() => toggleSection('trade')}
+            />
+            {expandedSections.has('trade') && (
+              <ul className="layer-section-body">
+                {LAYER_GROUPS.map((group) => (
+                  <li key={group.label} className="layer-group">
+                    <span className="layer-group-label">{group.label}</span>
+                    <ul className="layer-group-items">
+                      {group.ids.map((id) => {
+                        const layer = LAYER_DEF_MAP[id];
+                        return (
+                          <li key={id}>
+                            <LayerBtn
+                              active={activeLayers.has(id)}
+                              color={layer.color}
+                              label={layer.label}
+                              description={layer.description}
+                              onToggle={() => onToggle(id)}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
+                ))}
               </ul>
-            </li>
-          ))}
-
-          <li className="layer-group">
-            <span className="layer-group-label">Military</span>
-            <ul className="layer-group-items">
-              {MILITARY_LAYER_DEFS.map((def) => (
-                <li key={def.id}>
-                  <LayerBtn
-                    active={activeMilitaryLayers.has(def.id)}
-                    color={def.color}
-                    label={def.label}
-                    description={def.description}
-                    onToggle={() => onMilitaryToggle(def.id)}
-                  />
-                </li>
-              ))}
-            </ul>
+            )}
           </li>
 
-          <li className="layer-group">
-            <span className="layer-group-label">Natural Borders</span>
-            <ul className="layer-group-items">
-              {NATURAL_GROUPS.flatMap((g) =>
-                g.ids.map((id) => {
-                  const def = NATURAL_LAYER_DEF_MAP[id];
-                  return (
-                    <li key={id}>
-                      <LayerBtn
-                        active={activeNaturalLayers.has(id)}
-                        color={def.color}
-                        label={def.label}
-                        description={def.description}
-                        onToggle={() => onNaturalToggle(id)}
-                      />
-                    </li>
-                  );
-                }),
-              )}
-            </ul>
+          {/* ── Military ─────────────────────────────────────────────────────── */}
+          <li className="layer-section">
+            <SectionHeader
+              label="Military"
+              activeCount={activeMilitaryLayers.size}
+              open={expandedSections.has('military')}
+              onToggle={() => toggleSection('military')}
+            />
+            {expandedSections.has('military') && (
+              <ul className="layer-section-body">
+                {MILITARY_LAYER_DEFS.map((def) => (
+                  <li key={def.id}>
+                    <LayerBtn
+                      active={activeMilitaryLayers.has(def.id)}
+                      color={def.color}
+                      label={def.label}
+                      description={def.description}
+                      onToggle={() => onMilitaryToggle(def.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
 
-          <li className="layer-group">
-            <span className="layer-group-label">Resources &amp; Climate</span>
-            <ul className="layer-group-items">
-              {RC_LAYER_DEFS.map((def) => (
-                <li key={def.id}>
-                  <LayerBtn
-                    active={activeResourcesLayers.has(def.id)}
-                    color={def.color}
-                    label={def.label}
-                    description={def.description}
-                    onToggle={() => onResourcesToggle(def.id)}
-                  />
-                </li>
-              ))}
-            </ul>
+          {/* ── Natural Borders ───────────────────────────────────────────────── */}
+          <li className="layer-section">
+            <SectionHeader
+              label="Natural Borders"
+              activeCount={activeNaturalLayers.size}
+              open={expandedSections.has('natural')}
+              onToggle={() => toggleSection('natural')}
+            />
+            {expandedSections.has('natural') && (
+              <ul className="layer-section-body">
+                {NATURAL_GROUPS.flatMap((g) =>
+                  g.ids.map((id) => {
+                    const def = NATURAL_LAYER_DEF_MAP[id];
+                    return (
+                      <li key={id}>
+                        <LayerBtn
+                          active={activeNaturalLayers.has(id)}
+                          color={def.color}
+                          label={def.label}
+                          description={def.description}
+                          onToggle={() => onNaturalToggle(id)}
+                        />
+                      </li>
+                    );
+                  }),
+                )}
+              </ul>
+            )}
           </li>
+
+          {/* ── Resources & Climate ───────────────────────────────────────────── */}
+          <li className="layer-section">
+            <SectionHeader
+              label="Resources & Climate"
+              activeCount={activeResourcesLayers.size}
+              open={expandedSections.has('resources')}
+              onToggle={() => toggleSection('resources')}
+            />
+            {expandedSections.has('resources') && (
+              <ul className="layer-section-body">
+                {RC_LAYER_DEFS.map((def) => (
+                  <li key={def.id}>
+                    <LayerBtn
+                      active={activeResourcesLayers.has(def.id)}
+                      color={def.color}
+                      label={def.label}
+                      description={def.description}
+                      onToggle={() => onResourcesToggle(def.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+
         </ul>
       )}
     </div>

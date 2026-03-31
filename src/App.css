@@ -186,6 +186,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 14px;
   min-width: 280px;
+  max-width: 340px;
   max-height: calc(100vh - 220px);
   overflow-y: auto;
   box-shadow: var(--shadow-md);
@@ -213,19 +214,84 @@ body {
   padding: 0.3rem 0;
 }
 
-.layer-group-label {
-  display: block;
-  padding: 0.5rem 0.9rem 0.2rem;
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: oklch(65% 0.02 256);
+/* ─── Layer Sections (collapsible top-level) ────── */
+.layer-section {
   border-top: 1px solid var(--border);
 }
 
-.layer-group:first-child .layer-group-label {
+.layer-section:first-child {
   border-top: none;
+}
+
+.layer-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.9rem 0.45rem;
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.layer-section-header:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+.layer-section-label {
+  flex: 1;
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: oklch(45% 0.025 256);
+  transition: color 0.12s;
+}
+
+.layer-section-header.open .layer-section-label {
+  color: oklch(27.8% 0.033 256.8);
+}
+
+.layer-section-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 99px;
+  background: oklch(55% 0.12 256);
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.layer-section-body {
+  list-style: none;
+  padding: 0 0 0.25rem;
+}
+
+.layer-chevron {
+  flex-shrink: 0;
+  color: oklch(60% 0.02 256);
+  transition: transform 0.18s ease;
+}
+
+.layer-chevron.open {
+  transform: rotate(180deg);
+}
+
+.layer-group-label {
+  display: block;
+  padding: 0.4rem 0.9rem 0.15rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: oklch(70% 0.015 256);
+}
+
+.layer-group:first-child .layer-group-label {
+  padding-top: 0.1rem;
 }
 
 .layer-group-items {
@@ -345,9 +411,19 @@ body {
 
 .preset-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.preset-card-header:hover .preset-card-title {
+  color: oklch(20% 0.04 256.8);
 }
 
 .preset-card-titles {
@@ -355,6 +431,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+  min-width: 0;
 }
 
 .preset-card-title {
@@ -362,6 +439,7 @@ body {
   font-weight: 700;
   color: oklch(27.8% 0.033 256.8);
   line-height: 1.2;
+  transition: color 0.12s;
 }
 
 .preset-card-tagline {
@@ -369,6 +447,16 @@ body {
   color: oklch(55% 0.025 256);
   font-style: italic;
   line-height: 1.3;
+}
+
+/* Collapsed/expanded body */
+.preset-card-body {
+  display: none;
+  padding-top: 0.4rem;
+}
+
+.preset-card-body.open {
+  display: block;
 }
 
 .preset-card-desc {
@@ -379,7 +467,6 @@ body {
 }
 
 .preset-activate-btn {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.28rem;
@@ -394,8 +481,7 @@ body {
   letter-spacing: 0.03em;
   transition: background 0.12s, color 0.12s, opacity 0.12s;
   white-space: nowrap;
-  align-self: flex-start;
-  margin-top: 0.05rem;
+  margin-top: 0.5rem;
 }
 
 .preset-activate-btn:hover {
