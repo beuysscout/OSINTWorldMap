@@ -16,10 +16,13 @@ import {
 } from '../../data/powerAlliances';
 import type { PowerAllianceCategory, PowerAllianceGroup } from '../../data/powerAlliances';
 
-// Include both 'all' and 'US' worldviews — same pattern as WorldMap.tsx.
-// Using only 'all' silently excludes Russia, China, and others.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], true, false];
+// Must use 'any' with two equality checks — see WorldMap.tsx comment for
+// full explanation of why ['match', ..., ['all', 'US'], ...] is broken.
+const WORLDVIEW_FILTER = [
+  'any',
+  ['==', ['get', 'worldview'], 'all'],
+  ['==', ['get', 'worldview'], 'US'],
+];
 
 // Alliance fills are visual-only; country hover/click is handled by the base
 // 'countries-fill' layer in WorldMap, so no interactive IDs are needed here.

@@ -11,6 +11,7 @@ import NaturalFeaturesLayer, { NATURAL_INTERACTIVE_LAYER_IDS } from './NaturalFe
 import MilitaryLayer, { MILITARY_INTERACTIVE_LAYER_IDS } from './MilitaryLayer';
 import ResourcesClimateLayer, { RESOURCE_INTERACTIVE_LAYER_IDS } from './ResourcesClimateLayer';
 import GeoLabels from './GeoLabels';
+import GraticuleLayer from './GraticuleLayer';
 import LayerControl from '../UI/LayerControl';
 import HistoricalBordersLayer, { HISTORICAL_FILL_ID } from './HistoricalBordersLayer';
 import TimeSlider from '../UI/TimeSlider';
@@ -103,14 +104,24 @@ function buildTradeTooltip(
 }
 
 // ── Worldview filter ──────────────────────────────────────────────────────
-// Include both 'all' (undisputed borders) and 'US' (US-recognised borders for
-// disputed territories). This is Mapbox's recommended pattern and ensures
-// countries like Russia and China — whose polygons only exist under 'US', not
-// 'all' — are included and interactive. Countries that appear in both worldviews
-// share the same promoteId (iso_3166_1_alpha_3), so feature-state is applied to
-// all matching features consistently and `find()` in event handlers returns one.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WORLDVIEW_FILTER: any = ['match', ['get', 'worldview'], ['all', 'US'], true, false];
+// Include every worldview variant emitted by the tileset so no countries are
+// dropped from rendering/interactivity due to an incomplete worldview list.
+const WORLDVIEW_FILTER = ['has', 'worldview'];
+const BORDER_WORLDVIEW_FILTER = ['has', 'worldview'];
+
+const COUNTRY_INTERACTIVE_LAYER_IDS = ['countries-fill', 'countries-sim-fill', 'countries-line'] as const;
+
+function resolveCountryFeature(
+  features: MapMouseEvent['features'],
+): NonNullable<MapMouseEvent['features']>[number] | undefined {
+  if (!features?.length) return undefined;
+  // Prefer polygon fills for accurate country interior hit-testing.
+  const fill = features.find((f) => f.layer?.id === 'countries-fill');
+  if (fill) return fill;
+  const simFill = features.find((f) => f.layer?.id === 'countries-sim-fill');
+  if (simFill) return simFill;
+  return features.find((f) => f.layer?.id === 'countries-line');
+}
 
 // ── Component ─────────────────────────────────────────────────────────────
 
@@ -284,7 +295,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       if (!map) return;
 
       const features = e.features ?? [];
-      const countryFeat = features.find((f) => f.layer?.id === 'countries-fill');
+      const countryFeat = resolveCountryFeature(features);
       const tradeFeat = features.find((f) => f.layer?.id && ALL_TRADE_LAYER_IDS.includes(f.layer.id));
       const naturalFeat = features.find((f) => f.layer?.id && NATURAL_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
       const militaryFeat = features.find((f) => f.layer?.id && MILITARY_INTERACTIVE_LAYER_IDS.includes(f.layer.id));
@@ -532,7 +543,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
       if (historicalYear !== null) return;
 
       const features = e.features ?? [];
-      const countryFeat = features.find((f) => f.layer?.id === 'countries-fill');
+      const countryFeat = resolveCountryFeature(features);
       if (countryFeat) {
         const promoted = countryFeat.id;
         const alpha3 = (promoted != null && String(promoted) !== 'null' && String(promoted) !== 'undefined')
@@ -575,7 +586,7 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
 
   const interactiveLayerIds = useMemo(
     () => [
-      'countries-fill',
+      ...COUNTRY_INTERACTIVE_LAYER_IDS,
       HISTORICAL_FILL_ID,
       ...ALL_TRADE_LAYER_IDS,
       ...NATURAL_INTERACTIVE_LAYER_IDS,
@@ -593,16 +604,37 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
         initialViewState={viewStateRef.current}
         minZoom={isGlobe ? 0.5 : 2}
         maxZoom={7}
-        mapStyle="mapbox://styles/mapbox/light-v11"
+        mapStyle="mapbox://styles/mapbox/empty-v9"
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
         style={{ width: '100%', height: '100%' }}
         interactiveLayerIds={interactiveLayerIds}
-        onLoad={() => mapRef.current?.getMap().setProjection({ name: isGlobe ? 'globe' : 'mercator' })}
+        onLoad={() => {
+          const map = mapRef.current?.getMap();
+          if (!map) return;
+          map.setProjection({ name: isGlobe ? 'globe' : 'mercator' });
+          map.setFog({
+            'space-color': '#f0ece3',
+            'star-intensity': 0,
+            color: '#f0ece3',
+            'high-color': '#f0ece3',
+            'horizon-blend': 0,
+          });
+        }}
         onMove={onMove}
         onMouseMove={onMouseMove}
         onMouseOut={onMouseLeave}
         onClick={onClick}
       >
+        {/* Parchment background — paints ocean and any uncovered areas */}
+        <Layer
+          id="background"
+          type="background"
+          paint={{ 'background-color': '#f0ece3' }}
+        />
+
+        {/* Graticule grid — lat/lng lines at 30° intervals */}
+        <GraticuleLayer />
+
         {/* Historical empire layer — rendered below country outlines */}
         {historicalSnapshot && <HistoricalBordersLayer snapshot={historicalSnapshot} />}
 
@@ -619,13 +651,13 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
             source-layer="country_boundaries"
             filter={WORLDVIEW_FILTER}
             paint={{
-              'fill-color': '#c8dff0',
+              'fill-color': '#6b6b3a',
               'fill-opacity': historicalYear !== null ? 0 : [
                 'case',
-                ['boolean', ['feature-state', 'selected'], false], 0,
-                ['boolean', ['feature-state', 'compared'], false], 0,
-                ['boolean', ['feature-state', 'hovered'], false], 0.22,
-                0.07,
+                ['boolean', ['feature-state', 'selected'], false], 0.001,
+                ['boolean', ['feature-state', 'compared'], false], 0.001,
+                ['boolean', ['feature-state', 'hovered'], false], 0.10,
+                0.001,
               ],
             }}
           />
@@ -654,22 +686,47 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
             id="countries-line"
             type="line"
             source-layer="country_boundaries"
-            filter={WORLDVIEW_FILTER}
+            filter={BORDER_WORLDVIEW_FILTER}
             paint={{
               'line-color': [
                 'case',
-                ['boolean', ['feature-state', 'selected'], false], 'rgba(30,30,30,0.9)',
-                ['boolean', ['feature-state', 'compared'], false], 'rgba(204,85,0,0.85)',
-                ['boolean', ['feature-state', 'hovered'], false], 'rgba(60,60,60,0.45)',
-                'rgba(0,0,0,0.18)',
+                ['boolean', ['feature-state', 'selected'], false], '#6b6b3a',
+                ['boolean', ['feature-state', 'compared'], false], '#8b5e2a',
+                ['boolean', ['feature-state', 'hovered'], false], '#6b6b3a',
+                '#9c9080',
               ],
               'line-width': [
                 'case',
-                ['boolean', ['feature-state', 'selected'], false], 2,
-                ['boolean', ['feature-state', 'compared'], false], 2,
-                ['boolean', ['feature-state', 'hovered'], false], 1.2,
+                ['boolean', ['feature-state', 'selected'], false], 1.8,
+                ['boolean', ['feature-state', 'compared'], false], 1.8,
+                ['boolean', ['feature-state', 'hovered'], false], 1.0,
                 0.5,
               ],
+            }}
+          />
+        </Source>
+
+        {/* Country labels from Mapbox Streets */}
+        <Source id="mapbox-streets" type="vector" url="mapbox://mapbox.mapbox-streets-v8">
+          <Layer
+            id="country-labels"
+            type="symbol"
+            source-layer="place_label"
+            filter={['==', ['get', 'type'], 'country']}
+            layout={{
+              'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']],
+              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'],
+              'text-size': ['interpolate', ['linear'], ['zoom'], 1, 8, 4, 11, 7, 13],
+              'text-transform': 'uppercase',
+              'text-letter-spacing': 0.08,
+              'text-max-width': 6,
+              'text-anchor': 'center',
+            }}
+            paint={{
+              'text-color': '#6b6050',
+              'text-opacity': 0.65,
+              'text-halo-color': '#f0ece3',
+              'text-halo-width': 1.2,
             }}
           />
         </Source>
