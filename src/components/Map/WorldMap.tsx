@@ -612,12 +612,14 @@ export default function WorldMap({ selectedCountry, onCountrySelect, compareCoun
           const map = mapRef.current?.getMap();
           if (!map) return;
           map.setProjection({ name: isGlobe ? 'globe' : 'mercator' });
+          // Keep a flat parchment page while adding subtle globe rim keylines.
           map.setFog({
-            'space-color': '#f0ece3',
-            'star-intensity': 0,
             color: '#f0ece3',
-            'high-color': '#f0ece3',
-            'horizon-blend': 0,
+            'high-color': '#d8d1c4',
+            'space-color': '#f0ece3',
+            'horizon-blend': 0.08,
+            'star-intensity': 0,
+            range: [0.6, 10],
           });
         }}
         onMove={onMove}
