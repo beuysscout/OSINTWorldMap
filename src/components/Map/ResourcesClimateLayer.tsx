@@ -19,9 +19,12 @@ import type {
   ClimateRiskLevel,
 } from '../../data/resourcesClimate';
 
-// Matches WorldMap — one geometry per country, no stacked duplicates
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const WORLDVIEW_FILTER: any = ['==', ['get', 'worldview'], 'all'];
+// See WorldMap.tsx WORLDVIEW_FILTER comment for full explanation.
+const WORLDVIEW_FILTER = [
+  'any',
+  ['==', ['get', 'worldview'], 'all'],
+  ['==', ['get', 'worldview'], 'US'],
+];
 
 // Layer IDs that should receive pointer interactivity (minerals only)
 export const RESOURCE_INTERACTIVE_LAYER_IDS: string[] = ['rc-minerals'];
